@@ -21,5 +21,12 @@
         android:id="@+id/navigation_notifications"
         android:name="com.example.runtime.ui.notifications.NotificationsFragment"
         android:label="@string/title_notifications"
-        tools:layout="@layout/fragment_notifications" />
+        tools:layout="@layout/fragment_notifications"/>
+
+    <fragment
+        android:id="@+id/navigation_run"
+        android:name="com.example.runtime.ui.run.RunFragment"
+        android:label="@string/title_run"
+        tools:layout="@layout/fragment_run" />
+
 </navigation>
