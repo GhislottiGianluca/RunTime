@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "712316898997",
+    "project_id": "runtime-9c874",
+    "storage_bucket": "runtime-9c874.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:712316898997:android:61f9e46ee1526834b6b8fc",
+        "android_client_info": {
+          "package_name": "com.example.runtime"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBn6Ul2x9H7USY0pkHYjhvzTGlpWHcIv5g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
