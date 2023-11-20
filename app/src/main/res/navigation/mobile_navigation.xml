@@ -12,14 +12,21 @@
         tools:layout="@layout/fragment_home" />
 
     <fragment
-        android:id="@+id/navigation_dashboard"
-        android:name="com.example.runtime.ui.dashboard.DashboardFragment"
-        android:label="@string/title_dashboard"
-        tools:layout="@layout/fragment_dashboard" />
+        android:id="@+id/navigation_activity"
+        android:name="com.example.runtime.ui.activity.ActivityFragment"
+        android:label="@string/title_activity"
+        tools:layout="@layout/fragment_activity" />
 
     <fragment
         android:id="@+id/navigation_notifications"
         android:name="com.example.runtime.ui.notifications.NotificationsFragment"
         android:label="@string/title_notifications"
-        tools:layout="@layout/fragment_notifications" />
+        tools:layout="@layout/fragment_notifications"/>
+
+    <fragment
+        android:id="@+id/navigation_run"
+        android:name="com.example.runtime.ui.run.RunFragment"
+        android:label="@string/title_run"
+        tools:layout="@layout/fragment_run" />
+
 </navigation>
