@@ -24,10 +24,12 @@ public class RunFragment extends Fragment {
         binding = FragmentRunBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
-        final TextView textView = binding.textRun;
-        runViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
         return root;
     }
+
+
+
+
 
     @Override
     public void onDestroyView() {

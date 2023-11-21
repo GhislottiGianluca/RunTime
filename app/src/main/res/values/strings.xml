@@ -5,4 +5,7 @@
     <string name="run">Run</string>
     <string name="title_run">Run</string>
     <string name="title_activity">Activity</string>
+    <string name="workout_break">workout break</string>
+    <string name="stop_workout">stop workout</string>
+    <string name="start_workout">start workout</string>
 </resources>
