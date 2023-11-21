@@ -8,4 +8,6 @@
     <string name="workout_break">workout break</string>
     <string name="stop_workout">stop workout</string>
     <string name="start_workout">start workout</string>
+    <string name="InitialTextView">-\'--\'\'</string>
+    <string name="InitialKMValue">0,00</string>
 </resources>
