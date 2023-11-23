@@ -6,14 +6,11 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
-import android.os.SystemClock;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
-import android.widget.TextView;
-
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -22,10 +19,9 @@ import androidx.lifecycle.ViewModelProvider;
 import com.example.runtime.R;
 import com.example.runtime.databinding.FragmentRunBinding;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.TimeZone;
+import java.time.LocalDateTime;
 
 public class RunFragment extends Fragment {
 
@@ -43,6 +39,8 @@ public class RunFragment extends Fragment {
     private SensorManager sensorManager;
     private StepCounterListener sensorListener;
 
+    List<LocalDateTime> globalList = new ArrayList<>();
+
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -59,8 +57,6 @@ public class RunFragment extends Fragment {
         sensorManager = (SensorManager) getActivity().getSystemService(Context.SENSOR_SERVICE);
         accSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
 
-
-
         setButtonListener();
 
         return root;
@@ -73,7 +69,7 @@ public class RunFragment extends Fragment {
             play.setVisibility(View.GONE);
             pause.setVisibility(View.VISIBLE);
             stop.setVisibility(View.VISIBLE);
-            pause.setImageResource(android.R.drawable.ic_media_pause);
+            pause.setImageResource(R.drawable.pause);
 
             startResumeRun();
 
@@ -84,25 +80,33 @@ public class RunFragment extends Fragment {
             play.setVisibility(View.VISIBLE);
             pause.setVisibility(View.GONE);
             stop.setVisibility(View.GONE);
+            globalList.addAll(sensorListener.getLocalList());
             stopPauseRun();
-            pause.setImageResource(android.R.drawable.ic_media_pause);
+            pause.setImageResource(R.drawable.pause);
             pauseManagement = false;
+            terminateRun();
 
         });
 
         //setOnClickListener of the Pause ImageButton
         pause.setOnClickListener(v -> {
             if(pauseManagement){
-                pause.setImageResource(android.R.drawable.ic_media_play);
+                pause.setImageResource(R.drawable.play);
                 pauseManagement = false;
+                globalList.addAll(sensorListener.getLocalList());
                 stopPauseRun();
                 //create a run part object and push it in firebase
             }else{
-                pause.setImageResource(android.R.drawable.ic_media_pause);
+                pause.setImageResource(R.drawable.pause);
                 pauseManagement = true;
                 startResumeRun();
             }
         });
+    }
+
+    //Method used to send the data to Firebase
+    public void terminateRun(){
+        globalList.removeAll(globalList);
     }
 
     //Method used to activate the sensorListener when the user press start or resume buttons
@@ -135,13 +139,12 @@ public class RunFragment extends Fragment {
 
 class  StepCounterListener implements SensorEventListener {
 
-    TextView stepCountsView;
-    public static int accDetectorCounter = 0;
-    private long lastSensorUpdate = 0;
     List<Integer> accSeries = new ArrayList<>();
     private double accMag = 0;
     private int lastAddedIndex = 1;
     int stepThreshold = 7;
+    List<LocalDateTime> localList = new ArrayList<>();
+
 
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
@@ -185,16 +188,20 @@ class  StepCounterListener implements SensorEventListener {
             int downwardSlope = valuesInWindow.get(i) - valuesInWindow.get(i - 1);
 
             if (forwardSlope < 0 && downwardSlope > 0 && valuesInWindow.get(i) > stepThreshold) {
-                countSteps(accDetectorCounter);
-                Log.d("ACC STEPS: ", String.valueOf(accDetectorCounter));
+                countSteps();
+                Log.d("ACC STEPS: ", String.valueOf(LocalDateTime.now()));
 
             }
         }
     }
 
-    private void countSteps(float step) {
-        accDetectorCounter += step;
+    private void countSteps() {
+        localList.add(LocalDateTime.now());
 
-        Log.d("ACCELEROMETER REVELED STEPS: ", String.valueOf(accDetectorCounter));
     }
+
+    public List<LocalDateTime> getLocalList(){
+        return localList;
+    }
+
 }
