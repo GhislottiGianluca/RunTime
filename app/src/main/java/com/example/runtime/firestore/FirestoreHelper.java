@@ -13,9 +13,11 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
@@ -26,13 +28,24 @@ import java.util.UUID;
 public class FirestoreHelper {
     private static FirebaseFirestore db = FirebaseFirestore.getInstance();
 
+    public static FirebaseFirestore getDb() {
+        return db;
+    }
+
+    public static String formatDateTime(LocalDateTime dateTime) {
+        DateTimeFormatter formatter = DateTimeFormatter
+                .ofPattern("d MMM yyyy, 'at' HH:mm", Locale.ENGLISH);
+
+        return dateTime.format(formatter);
+    }
+
     public static Timestamp getFirebaseTimestampFromLocalDateTime(LocalDateTime date) {
         Instant instant = date.atZone(ZoneId.systemDefault()).toInstant();
         return new Timestamp(instant.toEpochMilli() / 1000, (int) ((instant.toEpochMilli() % 1000) * 1000000));
     }
 
 
-    public static LocalDateTime getLocalDateTimeFromFirebaseTimestampLocalDateTime(Timestamp date) {
+    public static LocalDateTime getLocalDateTimeFromFirebaseTimestamp(Timestamp date) {
         Instant instant = date.toDate().toInstant();
         return LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
     }
@@ -129,24 +142,28 @@ public class FirestoreHelper {
                     Log.w("failed to get run", "Error adding document", e);
 
                 });
+    }
 
-        /*try {
-            // Use get() to fetch the data synchronously
-            QuerySnapshot querySnapshot = Tasks.await(query.get());
+    public static void getAllRunsByUuid(String userUuid, List<Run> runs) {
+        CollectionReference runsCollection = db.collection("runs");
 
-            List<Run> runs = new ArrayList<>();
-            for (QueryDocumentSnapshot document : querySnapshot) {
-                // Convert the document to a Run object or process the data as needed
-                Run run = document.toObject(Run.class);
-                runs.add(run);
-            }
+        Query query = runsCollection
+                .whereEqualTo("userUuid", userUuid);
 
-            return runs;
-        } catch (ExecutionException | InterruptedException e) {
-            // Handle exceptions
-            e.printStackTrace();
-            return Collections.emptyList();
-        }*/
+        query.get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    Log.w("RUN", "try to deserialize run");
+                    for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
+                        Log.w("RUN shap", "try  run");
+                        Run run = document.toObject(Run.class);
+                        runs.add(run);
+                    }
+                    runs.forEach(run -> Log.d(run.getRunId(), "at time " + run.getStartDateTime()));
+                })
+                .addOnFailureListener(e -> {
+                    Log.w("failed to get run", "Error adding document", e);
+
+                });
     }
 
     public static void getRunSegmentsByRunId(String runId) {
@@ -162,7 +179,7 @@ public class FirestoreHelper {
                         RunSegment segment = document.toObject(RunSegment.class);
                         segments.add(segment);
                     }
-                    segments.forEach(run -> Log.d(run.getRunId(), "at time " + getLocalDateTimeFromFirebaseTimestampLocalDateTime(run.getStartDateTime()) ));
+                    segments.forEach(run -> Log.d(run.getRunId(), "at time " + getLocalDateTimeFromFirebaseTimestamp(run.getStartDateTime())));
                 })
                 .addOnFailureListener(e -> {
                     Log.w("failed to get run", "Error adding document", e);
