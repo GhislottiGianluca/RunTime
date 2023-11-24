@@ -7,6 +7,18 @@
     tools:context=".ui.home.HomeFragment">
 
     <Button
+        android:id="@+id/button_test2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="PerformCreateUser"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="@+id/text_home"
+        app:layout_constraintHorizontal_bias="0.54"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.098" />
+
+    <Button
         android:id="@+id/button_getSegments"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -71,10 +83,10 @@
         app:layout_constraintVertical_bias="0.348" />
 
     <Button
-        android:id="@+id/button_test"
+        android:id="@+id/button_logout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="PerformCreateUser"
+        android:text="Logout"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="@+id/text_home"
         app:layout_constraintHorizontal_bias="0.52"

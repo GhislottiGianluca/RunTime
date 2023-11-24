@@ -11,6 +11,9 @@ public class User {
         this.uuid = uuid;
     }
 
+    public User() {
+    }
+
     @Override
     public String toString() {
         return "User{" +

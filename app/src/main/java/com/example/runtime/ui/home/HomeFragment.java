@@ -1,5 +1,6 @@
 package com.example.runtime.ui.home;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -12,9 +13,11 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.example.runtime.LoginActivity;
 import com.example.runtime.databinding.FragmentHomeBinding;
 import com.example.runtime.firestore.FirestoreHelper;
 import com.example.runtime.firestore.models.Run;
+import com.example.runtime.sharedPrefs.SharedPreferencesHelper;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -27,6 +30,8 @@ public class HomeFragment extends Fragment {
     private Button createSegmentButton;
     private Button getRun;
     private Button getSegments;
+
+    private Button logoutButton;
 
 
 
@@ -41,16 +46,17 @@ public class HomeFragment extends Fragment {
         final TextView textView = binding.textHome;
         homeViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
 
-        testButton = binding.buttonTest;
+        //testButton = binding.buttonTest;
         createRunButton = binding.buttonRunCreate;
         createSegmentButton = binding.buttonRunSegCreate;
         getRun = binding.buttonGetRuns;
         getSegments = binding.buttonGetSegments;
+        logoutButton = binding.buttonLogout;
 
 
-        testButton.setOnClickListener(e -> {
+      /*  testButton.setOnClickListener(e -> {
             FirestoreHelper.createUser("Cristo", "Risorto");
-        });
+        });*/
 
         createRunButton.setOnClickListener(e -> {
             FirestoreHelper.createRun("1538fefe-256b-464e-b9cb-5ed8848043e8", LocalDateTime.now());
@@ -66,6 +72,15 @@ public class HomeFragment extends Fragment {
 
         getSegments.setOnClickListener(e -> {
             FirestoreHelper.getRunSegmentsByRunId("12914a82-3482-407d-b8f8-594899243ddc");
+        });
+
+        logoutButton.setOnClickListener(e -> {
+            SharedPreferencesHelper.clearSP(requireContext());
+            Intent intent = new Intent(requireContext(), LoginActivity.class);
+            startActivity(intent);
+
+            // Optionally, you can finish the current activity to prevent going back to it
+            requireActivity().finish();
         });
 
         return root;

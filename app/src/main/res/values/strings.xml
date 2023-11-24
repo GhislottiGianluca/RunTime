@@ -1,5 +1,15 @@
 <resources>
     <string name="app_name">RunTime</string>
+    <string name="welcomeLogin">Welcome to RunTime</string>
+    <string name="hintUsername">Username</string>
+    <string name="hintPassword">Password</string>
+    <string name="hintRepeatPassword">Repeat password</string>
+    <string name="register">Register</string>
+    <string name="welcomeRegister">Create new RunTime account</string>
+    <string name="alreadyAnAccount">Have you already an account?</string>
+    <string name="buttonCreateAccount">Create account</string>
+
+
     <string name="title_home">Home</string>
     <string name="title_notifications">Notifications</string>
     <string name="run">Run</string>
