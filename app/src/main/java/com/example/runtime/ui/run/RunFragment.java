@@ -6,11 +6,14 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Chronometer;
 import android.widget.ImageButton;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -26,13 +29,20 @@ import java.time.LocalDateTime;
 public class RunFragment extends Fragment {
 
     private FragmentRunBinding binding;
-
     private ImageButton play;
     private ImageButton pause;
     private ImageButton stop;
     private boolean pauseManagement = true;
     private float heightcm = 0;
     private float stridem = (float) (heightcm * 1.4);
+    // Data running textView
+    private TextView averagePace;
+    private TextView actualPace;
+    private TextView calories;
+    private TextView time;
+    private TextView km;
+    Chronometer chronometer;
+    long timeWhenStopped;
 
     //Sensor variable managing
     private Sensor accSensor;
@@ -54,8 +64,16 @@ public class RunFragment extends Fragment {
         pause = (ImageButton) root.findViewById(R.id.pause);
         stop = (ImageButton) root.findViewById(R.id.stop);
 
+        averagePace = root.findViewById(R.id.tv1);
+        actualPace = root.findViewById(R.id.tv3);
+        calories = root.findViewById(R.id.tv2);
+        km = root.findViewById(R.id.tvp);
+        time = root.findViewById(R.id.time);
+
         sensorManager = (SensorManager) getActivity().getSystemService(Context.SENSOR_SERVICE);
         accSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
+
+        chronometer = root.findViewById(R.id.time);
 
         setButtonListener();
 
@@ -71,6 +89,10 @@ public class RunFragment extends Fragment {
             stop.setVisibility(View.VISIBLE);
             pause.setImageResource(R.drawable.pause);
 
+            //Chronometer handling
+            chronometer.setBase(SystemClock.elapsedRealtime());
+            chronometer.start();
+            
             startResumeRun();
 
         });
@@ -80,8 +102,15 @@ public class RunFragment extends Fragment {
             play.setVisibility(View.VISIBLE);
             pause.setVisibility(View.GONE);
             stop.setVisibility(View.GONE);
-            globalList.addAll(sensorListener.getLocalList());
+            if(sensorListener != null){
+                globalList.addAll(sensorListener.getLocalList());
+            }
             stopPauseRun();
+
+            //Chronometer handling
+            chronometer.stop();
+            chronometer.setBase(SystemClock.elapsedRealtime());
+
             pause.setImageResource(R.drawable.pause);
             pauseManagement = false;
             terminateRun();
@@ -93,12 +122,23 @@ public class RunFragment extends Fragment {
             if(pauseManagement){
                 pause.setImageResource(R.drawable.play);
                 pauseManagement = false;
+
                 globalList.addAll(sensorListener.getLocalList());
+
+                //Chronometer handling
+                timeWhenStopped = chronometer.getBase() - SystemClock.elapsedRealtime();
+                chronometer.stop();
+
                 stopPauseRun();
                 //create a run part object and push it in firebase
             }else{
                 pause.setImageResource(R.drawable.pause);
                 pauseManagement = true;
+
+                //Chronometer handling
+                chronometer.setBase(SystemClock.elapsedRealtime() + timeWhenStopped);
+                chronometer.start();
+
                 startResumeRun();
             }
         });
@@ -135,6 +175,21 @@ public class RunFragment extends Fragment {
     }
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 class  StepCounterListener implements SensorEventListener {
