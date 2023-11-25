@@ -11,6 +11,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.runtime.firestore.FirestoreHelper;
+import com.google.firebase.firestore.DocumentSnapshot;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,6 +25,8 @@ public class RegisterActivity extends AppCompatActivity {
     private TextView alreadyRegisteredText;
     private Button createAccountButton;
 
+    private static final String TAG = "RegisterActivity";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -35,65 +38,62 @@ public class RegisterActivity extends AppCompatActivity {
         alreadyRegisteredText = findViewById(R.id.alreadyAnAccount);
         createAccountButton = findViewById(R.id.buttonCreateAccount);
 
-        // Add any additional logic for the register screen if needed
         createAccountButton.setOnClickListener(view -> {
-            // Get username and password from EditText fields
             String username = usernameEditText.getText().toString();
             String password = passwordEditText.getText().toString();
             String repeatPassword = repeatPasswordEditText.getText().toString();
 
-            // Check if username and password are valid (you can replace this with your own logic)
             if (isPasswordMatching(password, repeatPassword)) {
-                if (isUsernameAvailable(username)) {
-                    //can be removed
-                    String uuid = UUID.randomUUID().toString();
-                    Map<String, Object> data = new HashMap<>();
-                    data.put("uuid", uuid);
-                    data.put("username", username);
-                    data.put("password", password);
-
-                    //        Log.d(String tag, String message): Debug log message.
-                    //        Log.i(String tag, String message): Info log message.
-                    //        Log.w(String tag, String message): Warning log message.
-                    //        Log.e(String tag, String message): Error log message.
-                    FirestoreHelper.getDb().collection("users")
-                            .add(data)
-                            .addOnSuccessListener(documentReference -> {
-                                // Document added successfully
-                                Toast.makeText(RegisterActivity.this, "Registration successful, please log in", Toast.LENGTH_SHORT).show();
-                                Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
-                                startActivity(intent);
-                                Log.d("User created", "DocumentSnapshot added with ID: " + documentReference.getId());
-                            })
-                            .addOnFailureListener(e -> {
-                                // Handle errors
-                                Log.w("User creation failed", "Error adding document", e);
-                            });
-
-                } else {
-                    Toast.makeText(RegisterActivity.this, "Username not available, please change it", Toast.LENGTH_SHORT).show();
-                }
+                ifUsernameAvailableCreateUser(username, password);
             } else {
-                // Failed login
                 Toast.makeText(RegisterActivity.this, "Password and repeatPassword are different", Toast.LENGTH_SHORT).show();
             }
         });
 
         alreadyRegisteredText.setOnClickListener(view -> {
-            // navigate to registerScreen
             Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
             startActivity(intent);
         });
     }
 
-    //todo
-    private boolean isUsernameAvailable(String username) {
-        //firebase call to check availability
-        return true;
+    private void ifUsernameAvailableCreateUser(String username, String password) {
+        FirestoreHelper.getDb().collection("users")
+                .whereEqualTo("username", username)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        if (!task.getResult().isEmpty()) {
+                            Toast.makeText(RegisterActivity.this, "Username not available, please change it", Toast.LENGTH_SHORT).show();
+                        } else {
+                            createUser(username, password);
+                        }
+                    } else {
+                        Log.e(TAG, "Error checking username availability", task.getException());
+                    }
+                });
     }
 
     private boolean isPasswordMatching(String password, String repeatPassword) {
-        // Example: Check if username and password are not empty
         return password.equals(repeatPassword);
+    }
+
+    private void createUser(String username, String password) {
+        String uuid = UUID.randomUUID().toString();
+        Map<String, Object> data = new HashMap<>();
+        data.put("uuid", uuid);
+        data.put("username", username);
+        data.put("password", password);
+
+        FirestoreHelper.getDb().collection("users")
+                .add(data)
+                .addOnSuccessListener(documentReference -> {
+                    Toast.makeText(RegisterActivity.this, "Registration successful, please log in", Toast.LENGTH_SHORT).show();
+                    Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
+                    startActivity(intent);
+                    Log.d(TAG, "User created. DocumentSnapshot added with ID: " + documentReference.getId());
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error adding document", e);
+                });
     }
 }

@@ -24,6 +24,8 @@ import java.util.UUID;
 /**
  * to deserialize firebase needs the java object to have an empty constructor, and the set methods
  * need to get the correct firebase type.
+ *
+ * todo: insert here the methods in the screens and activity
  */
 public class FirestoreHelper {
     private static FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -50,6 +52,7 @@ public class FirestoreHelper {
         return LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
     }
 
+    @Deprecated
     public static String createUser(String username, String password) {
         // Create a new document with a generated ID
         String uuid = UUID.randomUUID().toString();
@@ -76,6 +79,7 @@ public class FirestoreHelper {
         return uuid;
     }
 
+    @Deprecated
     public static void createRun(String userUuid, LocalDateTime startDateTime) {
         String runId = UUID.randomUUID().toString();
         // Create a new document with a generated ID
@@ -96,6 +100,7 @@ public class FirestoreHelper {
                 });
     }
 
+    @Deprecated
     public static void createRunSegment(String runId, int steps, LocalDateTime startDateTime, LocalDateTime endDateTime) {
         // Create a new document with a generated ID
         Map<String, Object> data = new HashMap<>();
@@ -119,6 +124,7 @@ public class FirestoreHelper {
                 });
     }
 
+    @Deprecated
     public static void getRunsByUuidAndStartDateTimeInRange(String userUuid, LocalDateTime startDate, LocalDateTime endDate) {
         CollectionReference runsCollection = db.collection("runs");
 
@@ -144,6 +150,7 @@ public class FirestoreHelper {
                 });
     }
 
+    @Deprecated
     public static void getAllRunsByUuid(String userUuid, List<Run> runs) {
         CollectionReference runsCollection = db.collection("runs");
 
@@ -166,6 +173,7 @@ public class FirestoreHelper {
                 });
     }
 
+    @Deprecated
     public static void getRunSegmentsByRunId(String runId) {
         CollectionReference runsCollection = db.collection("runSegments");
 
