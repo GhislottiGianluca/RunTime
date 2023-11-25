@@ -22,29 +22,42 @@ import androidx.lifecycle.ViewModelProvider;
 import com.example.runtime.R;
 import com.example.runtime.databinding.FragmentRunBinding;
 
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.time.LocalDateTime;
+import java.util.Locale;
 
 public class RunFragment extends Fragment {
 
+    //Button variable
     private FragmentRunBinding binding;
     private ImageButton play;
     private ImageButton pause;
     private ImageButton stop;
+
     private boolean pauseManagement = true;
-    private float heightcm = 0;
-    private float stridem = (float) (heightcm * 1.4);
+
+    //Users data
+    private float height_cm = 170.0f;
+    private float weight_kg = 65.5f;
+    private final float stride_km = (float) (height_cm * 1.4) / 1_000_000;
+    private float km_value = 0;
+    private float calories_value = 0;
+    private float actualPace_value;
+    private float averagePace_value;
+
     // Data running textView
     private TextView averagePace;
     private TextView actualPace;
     private TextView calories;
-    private TextView time;
     private TextView km;
+
+    //Chronometer variable
     Chronometer chronometer;
     long timeWhenStopped;
 
-    //Sensor variable managing
+    //Sensor variables
     private Sensor accSensor;
     private SensorManager sensorManager;
     private StepCounterListener sensorListener;
@@ -60,16 +73,18 @@ public class RunFragment extends Fragment {
         binding = FragmentRunBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
+        //Button settings
         play = (ImageButton) root.findViewById(R.id.play);
         pause = (ImageButton) root.findViewById(R.id.pause);
         stop = (ImageButton) root.findViewById(R.id.stop);
 
-        averagePace = root.findViewById(R.id.tv1);
-        actualPace = root.findViewById(R.id.tv3);
-        calories = root.findViewById(R.id.tv2);
+        //Data textView
+        averagePace = (TextView) root.findViewById(R.id.tv1);
+        actualPace = (TextView) root.findViewById(R.id.tv3);
+        calories = (TextView) root.findViewById(R.id.tv2);
         km = root.findViewById(R.id.tvp);
-        time = root.findViewById(R.id.time);
 
+        //Sensor variable initialization
         sensorManager = (SensorManager) getActivity().getSystemService(Context.SENSOR_SERVICE);
         accSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
 
@@ -80,6 +95,12 @@ public class RunFragment extends Fragment {
         return root;
     }
 
+    //Callback interface
+    public interface UpdateDataListener {
+        void onUpdateData(LocalDateTime past, LocalDateTime now);
+    }
+
+
     private void setButtonListener() {
 
         //setOnClickListener of the Play ImageButton
@@ -88,11 +109,13 @@ public class RunFragment extends Fragment {
             pause.setVisibility(View.VISIBLE);
             stop.setVisibility(View.VISIBLE);
             pause.setImageResource(R.drawable.pause);
+            pauseManagement = true;
 
             //Chronometer handling
             chronometer.setBase(SystemClock.elapsedRealtime());
             chronometer.start();
-            
+
+            //Sensor handling
             startResumeRun();
 
         });
@@ -102,14 +125,23 @@ public class RunFragment extends Fragment {
             play.setVisibility(View.VISIBLE);
             pause.setVisibility(View.GONE);
             stop.setVisibility(View.GONE);
+
             if(sensorListener != null){
                 globalList.addAll(sensorListener.getLocalList());
             }
+
+            //Sensor handling
             stopPauseRun();
 
             //Chronometer handling
             chronometer.stop();
             chronometer.setBase(SystemClock.elapsedRealtime());
+
+            //Reset the textView data
+            calories.setText(String.valueOf(0));
+            km.setText(String.valueOf(0));
+            averagePace.setText("_'__''");
+            actualPace.setText("_'__''");
 
             pause.setImageResource(R.drawable.pause);
             pauseManagement = false;
@@ -137,7 +169,9 @@ public class RunFragment extends Fragment {
 
                 //Chronometer handling
                 chronometer.setBase(SystemClock.elapsedRealtime() + timeWhenStopped);
+                timeWhenStopped = 0;
                 chronometer.start();
+
 
                 startResumeRun();
             }
@@ -146,6 +180,8 @@ public class RunFragment extends Fragment {
 
     //Method used to send the data to Firebase
     public void terminateRun(){
+
+        //TODO 1 : push the data to firebase
         globalList.removeAll(globalList);
     }
 
@@ -155,7 +191,7 @@ public class RunFragment extends Fragment {
             Log.e("SensorError", "Accelerometer sensor not available");
 
         }else if(sensorListener == null){
-            sensorListener = new StepCounterListener();
+            sensorListener = new StepCounterListener(this::updateData);
             sensorManager.registerListener(sensorListener, accSensor, SensorManager.SENSOR_DELAY_NORMAL);
         }
     }
@@ -168,6 +204,34 @@ public class RunFragment extends Fragment {
         }
     }
 
+    public void updateData(LocalDateTime past, LocalDateTime now){
+        //Km values updating
+        km_value += stride_km;
+        if(km_value >= 0.01){
+            km.setText(String.format(Locale.getDefault(), "%.2f", km_value));
+        }
+
+        //Calories value updating
+        calories_value =  km_value * weight_kg;
+        if(calories_value >= 1){
+            calories.setText(String.valueOf((int) calories_value));
+        }
+
+
+        //Add the new step to the global list
+        globalList.add(now);
+
+
+        //Actual Pace
+        actualPace_value = stride_km / (ChronoUnit.MILLIS.between(past, now) / 60000.0f);
+        Log.d("Update: ", String.valueOf(actualPace_value));
+        actualPace.setText(String.valueOf(actualPace_value));
+
+        //Average Pace
+        averagePace_value = km_value / (ChronoUnit.MILLIS.between(globalList.get(0), now) / 60000.0f);
+        averagePace.setText(String.valueOf(averagePace_value));
+    }
+
         @Override
     public void onDestroyView() {
         super.onDestroyView();
@@ -177,20 +241,12 @@ public class RunFragment extends Fragment {
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
 
 class  StepCounterListener implements SensorEventListener {
 
@@ -200,6 +256,13 @@ class  StepCounterListener implements SensorEventListener {
     int stepThreshold = 7;
     List<LocalDateTime> localList = new ArrayList<>();
 
+    //RunFragment object
+    private RunFragment.UpdateDataListener updateDataListener;
+
+    //Listener constructor
+    public StepCounterListener(RunFragment.UpdateDataListener listener) {
+        this.updateDataListener = listener;
+    }
 
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
@@ -243,8 +306,8 @@ class  StepCounterListener implements SensorEventListener {
             int downwardSlope = valuesInWindow.get(i) - valuesInWindow.get(i - 1);
 
             if (forwardSlope < 0 && downwardSlope > 0 && valuesInWindow.get(i) > stepThreshold) {
-                countSteps();
                 Log.d("ACC STEPS: ", String.valueOf(LocalDateTime.now()));
+                countSteps();
 
             }
         }
@@ -252,6 +315,9 @@ class  StepCounterListener implements SensorEventListener {
 
     private void countSteps() {
         localList.add(LocalDateTime.now());
+        if(localList.size() > 2){
+            updateDataListener.onUpdateData(localList.get(localList.size()-1), LocalDateTime.now());
+        }
 
     }
 
