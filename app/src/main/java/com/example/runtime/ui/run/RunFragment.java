@@ -44,8 +44,8 @@ public class RunFragment extends Fragment {
     private final float stride_km = (float) (height_cm * 1.4) / 1_000_000;
     private float km_value = 0;
     private float calories_value = 0;
-    private float actualPace_value;
-    private float averagePace_value;
+    private double actualPace_value;
+    private double averagePace_value;
 
     // Data running textView
     private TextView averagePace;
@@ -97,7 +97,7 @@ public class RunFragment extends Fragment {
 
     //Callback interface
     public interface UpdateDataListener {
-        void onUpdateData(LocalDateTime past, LocalDateTime now);
+        void onUpdateData(List<LocalDateTime> last);
     }
 
 
@@ -204,9 +204,9 @@ public class RunFragment extends Fragment {
         }
     }
 
-    public void updateData(LocalDateTime past, LocalDateTime now){
+    public void updateData(List<LocalDateTime> last){
         //Km values updating
-        km_value += stride_km;
+        km_value += (stride_km * 5);
         if(km_value >= 0.01){
             km.setText(String.format(Locale.getDefault(), "%.2f", km_value));
         }
@@ -219,17 +219,32 @@ public class RunFragment extends Fragment {
 
 
         //Add the new step to the global list
-        globalList.add(now);
+        globalList.addAll(last);
 
 
         //Actual Pace
-        actualPace_value = stride_km / (ChronoUnit.MILLIS.between(past, now) / 60000.0f);
-        Log.d("Update: ", String.valueOf(actualPace_value));
-        actualPace.setText(String.valueOf(actualPace_value));
+        averagePace_value = ChronoUnit.MILLIS.between(last.get(0), last.get(4)) / 60000.0;
+        if (stride_km > 0 && averagePace_value > 0) {
+            double actualPace_value = averagePace_value / (stride_km * 5);
+            int actualPaceMinPart = (int) actualPace_value;
+            int actualPaceSecPart = (int) ((actualPace_value - actualPaceMinPart) * 60);
+            String actualPaceFormatted = actualPaceMinPart + "'" + actualPaceSecPart + "''";
+            actualPace.setText(actualPaceFormatted);
+        } else {
+            actualPace.setText("N/A");
+        }
 
         //Average Pace
-        averagePace_value = km_value / (ChronoUnit.MILLIS.between(globalList.get(0), now) / 60000.0f);
-        averagePace.setText(String.valueOf(averagePace_value));
+        averagePace_value = ChronoUnit.MILLIS.between(globalList.get(0), last.get(4)) / 60000.0;
+        if (km_value > 0 && averagePace_value > 0) {
+            averagePace_value = averagePace_value / km_value;
+            int averagePaceMinPart = (int) averagePace_value;
+            int averagePaceSecPart = (int) ((averagePace_value - averagePaceMinPart) * 60);
+            String averagePaceFormatted = averagePaceMinPart + "'" + averagePaceSecPart + "''";
+            averagePace.setText(averagePaceFormatted);
+        } else {
+            averagePace.setText("N/A"); // Or any other default value
+        }
     }
 
         @Override
@@ -315,12 +330,15 @@ class  StepCounterListener implements SensorEventListener {
 
     private void countSteps() {
         localList.add(LocalDateTime.now());
-        if(localList.size() > 2){
-            updateDataListener.onUpdateData(localList.get(localList.size()-1), LocalDateTime.now());
+
+        //Every 5 steps, we update the data
+        if(localList.size() % 5 == 0){
+            updateDataListener.onUpdateData(new ArrayList<>(localList.subList(localList.size() - 5, localList.size())));
         }
 
     }
 
+    //Get method of the localList of steps
     public List<LocalDateTime> getLocalList(){
         return localList;
     }

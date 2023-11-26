@@ -15,7 +15,7 @@
         android:text="@string/InitialTextView"
         app:layout_constraintBottom_toTopOf="@+id/time"
         app:layout_constraintEnd_toStartOf="@+id/tv3"
-        app:layout_constraintHorizontal_bias="0.432"
+        app:layout_constraintHorizontal_bias="0.404"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.173"
@@ -28,7 +28,7 @@
         android:text="0"
         app:layout_constraintBottom_toTopOf="@+id/tvp"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.614"
+        app:layout_constraintHorizontal_bias="0.576"
         app:layout_constraintStart_toEndOf="@+id/tv3"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.173" />
@@ -40,10 +40,10 @@
         android:text="@string/InitialTextView"
         app:layout_constraintBottom_toTopOf="@+id/time"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.498"
+        app:layout_constraintHorizontal_bias="0.524"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.175" />
+        app:layout_constraintVertical_bias="0.173" />
 
     <TextView
         android:id="@+id/tvp"
@@ -101,7 +101,7 @@
         android:layout_height="39dp"
         android:layout_marginEnd="240dp"
         android:gravity="center"
-        android:text="Average running pace"
+        android:text="Average pace (km/min)"
         app:layout_constraintBottom_toTopOf="@+id/time"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.464"
@@ -115,7 +115,7 @@
         android:layout_height="41dp"
         android:layout_marginEnd="120dp"
         android:gravity="center"
-        android:text="Actual running pace"
+        android:text="Actual pace (km/min)"
         app:layout_constraintBottom_toTopOf="@+id/time"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.45"
