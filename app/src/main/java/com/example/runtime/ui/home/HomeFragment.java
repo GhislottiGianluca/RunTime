@@ -63,7 +63,7 @@ public class HomeFragment extends Fragment {
         });
 
         createSegmentButton.setOnClickListener(e -> {
-            FirestoreHelper.createRunSegment("12914a82-3482-407d-b8f8-594899243ddc", 15000, LocalDateTime.now(), LocalDateTime.now().plusHours(3));
+            FirestoreHelper.createRunSegment("12914a82-3482-407d-b8f8-594899243ddc", 15000, LocalDateTime.now(), LocalDateTime.now().plusHours(3), 5);
         });
 
         getRun.setOnClickListener(e -> {

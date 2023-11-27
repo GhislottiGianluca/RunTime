@@ -130,6 +130,8 @@ public class RunFragment extends Fragment {
             chronometer.setBase(SystemClock.elapsedRealtime());
             chronometer.start();
 
+            //TODO: CREATE RUN
+
             //Sensor handling
             startResumeRun();
 
@@ -160,6 +162,9 @@ public class RunFragment extends Fragment {
 
             pause.setImageResource(R.drawable.pause);
             pauseManagement = false;
+
+            //TODO: CLOSE RUN
+
             terminateRun();
 
         });
@@ -176,6 +181,8 @@ public class RunFragment extends Fragment {
                 timeWhenStopped = chronometer.getBase() - SystemClock.elapsedRealtime();
                 chronometer.stop();
 
+                //TODO: CREATE RUN FRAGMENT
+
                 stopPauseRun();
                 //create a run part object and push it in firebase
             }else{
@@ -187,6 +194,7 @@ public class RunFragment extends Fragment {
                 timeWhenStopped = 0;
                 chronometer.start();
 
+                //TODO: CLOSE RUN FRAGMENT (?)
 
                 startResumeRun();
             }

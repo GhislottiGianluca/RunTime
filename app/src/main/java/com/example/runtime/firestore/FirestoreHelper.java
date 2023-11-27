@@ -101,7 +101,7 @@ public class FirestoreHelper {
     }
 
     @Deprecated
-    public static void createRunSegment(String runId, int steps, LocalDateTime startDateTime, LocalDateTime endDateTime) {
+    public static void createRunSegment(String runId, int steps, LocalDateTime startDateTime, LocalDateTime endDateTime, int calories) {
         // Create a new document with a generated ID
         Map<String, Object> data = new HashMap<>();
         data.put("runId", runId);
