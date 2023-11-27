@@ -7,6 +7,7 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.speech.tts.TextToSpeech;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -64,6 +65,11 @@ public class RunFragment extends Fragment {
 
     List<LocalDateTime> globalList = new ArrayList<>();
 
+    //Variables used to speech every km
+    TextToSpeech textToSpeech;
+    //Variable used to track every integer number of km reached by the user
+    int lastIntKmValue = 0;
+
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -89,6 +95,15 @@ public class RunFragment extends Fragment {
         accSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
 
         chronometer = root.findViewById(R.id.time);
+
+        //TextToSpeech variable initialisation
+        textToSpeech = new TextToSpeech(getActivity(), status -> {
+            if (status == TextToSpeech.SUCCESS) {
+                int result = textToSpeech.setLanguage(Locale.US);
+            } else {
+                Log.e("TTS", "Initialisation failure");
+            }
+        });
 
         setButtonListener();
 
@@ -205,11 +220,13 @@ public class RunFragment extends Fragment {
     }
 
     public void updateData(List<LocalDateTime> last){
+
         //Km values updating
         km_value += (stride_km * 5);
         if(km_value >= 0.01){
             km.setText(String.format(Locale.getDefault(), "%.2f", km_value));
         }
+
 
         //Calories value updating
         calories_value =  km_value * weight_kg;
@@ -236,19 +253,35 @@ public class RunFragment extends Fragment {
 
         //Average Pace
         averagePace_value = ChronoUnit.MILLIS.between(globalList.get(0), last.get(4)) / 60000.0;
+        int averagePaceMinPart = 0;
+        int averagePaceSecPart = 0;
         if (km_value > 0 && averagePace_value > 0) {
             averagePace_value = averagePace_value / km_value;
-            int averagePaceMinPart = (int) averagePace_value;
-            int averagePaceSecPart = (int) ((averagePace_value - averagePaceMinPart) * 60);
+            averagePaceMinPart = (int) averagePace_value;
+            averagePaceSecPart = (int) ((averagePace_value - averagePaceMinPart) * 60);
             String averagePaceFormatted = averagePaceMinPart + "'" + averagePaceSecPart + "''";
             averagePace.setText(averagePaceFormatted);
         } else {
-            averagePace.setText("N/A"); // Or any other default value
+            averagePace.setText("N/A");
+        }
+
+
+        //Notifies the user when each kilometer is reached
+        if((int) km_value > lastIntKmValue){
+            Log.d("Tag", "Ciao");
+            textToSpeech.speak("" + (int) km_value + "kilometers, average pace:" + averagePaceMinPart +" minutes," + averagePaceSecPart+ "seconds per kilometer.",
+                    TextToSpeech.QUEUE_FLUSH, null, null);
+            lastIntKmValue = (int) km_value;
         }
     }
 
         @Override
     public void onDestroyView() {
+        if (textToSpeech != null) {
+            textToSpeech.stop();
+            textToSpeech.shutdown();
+        }
+
         super.onDestroyView();
         binding = null;
     }
