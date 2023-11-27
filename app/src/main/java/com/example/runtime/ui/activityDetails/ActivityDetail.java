@@ -85,13 +85,6 @@ public class ActivityDetail extends AppCompatActivity {
         //considering a 0.8m step-width
         double totalDistanceKM = totalSteps * 0.8 / 1000;
 
-        /*Log.w("totalSteps", String.valueOf(totalSteps));
-        Log.w("startRun", startRun.toString());
-        Log.w("endRun", endRun.toString());
-        //Log.w("totalDurationString", totalDurationString);
-        Log.w("totalDurationInMinutes", String.valueOf(totalDuration.toMinutes()));
-        Log.w("totalDurationInSeconds", String.valueOf(totalDuration.getSeconds()));*/
-
         createInfoItem("Nr.steps", String.valueOf(totalSteps), infoContainer);
         createInfoItem("totalDistanceKM", String.valueOf(totalDistanceKM), infoContainer);
         createInfoItem("startRun", startRun.toString(), infoContainer);

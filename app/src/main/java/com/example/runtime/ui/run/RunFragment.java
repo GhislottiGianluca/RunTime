@@ -15,19 +15,27 @@ import android.view.ViewGroup;
 import android.widget.Chronometer;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.example.runtime.LoginActivity;
+import com.example.runtime.MainActivity;
 import com.example.runtime.R;
 import com.example.runtime.databinding.FragmentRunBinding;
+import com.example.runtime.firestore.FirestoreHelper;
+import com.example.runtime.sharedPrefs.SharedPreferencesHelper;
 
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.time.LocalDateTime;
 import java.util.Locale;
+import java.util.Map;
+import java.util.UUID;
 
 public class RunFragment extends Fragment {
 
@@ -39,7 +47,7 @@ public class RunFragment extends Fragment {
 
     private boolean pauseManagement = true;
 
-    //Users data
+    //Users data, these data will come from the user's model
     private float height_cm = 170.0f;
     private float weight_kg = 65.5f;
     private final float stride_km = (float) (height_cm * 1.4) / 1_000_000;
@@ -70,6 +78,10 @@ public class RunFragment extends Fragment {
     //Variable used to track every integer number of km reached by the user
     int lastIntKmValue = 0;
 
+    String runId = "";
+
+    LocalDateTime startRunDateTime = null;
+
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -78,6 +90,13 @@ public class RunFragment extends Fragment {
 
         binding = FragmentRunBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
+
+        String userUuid = SharedPreferencesHelper.getFieldStringFromSP(requireContext(), "uuid");
+
+        //todo in a second moment
+       /* if (userUuid != null && !userUuid.equals("")) {
+           //navigate to login !!
+        }*/
 
         //Button settings
         play = (ImageButton) root.findViewById(R.id.play);
@@ -105,7 +124,7 @@ public class RunFragment extends Fragment {
             }
         });
 
-        setButtonListener();
+        setButtonListener(userUuid);
 
         return root;
     }
@@ -116,7 +135,7 @@ public class RunFragment extends Fragment {
     }
 
 
-    private void setButtonListener() {
+    private void setButtonListener(String userUuid) {
 
         //setOnClickListener of the Play ImageButton
         play.setOnClickListener(v -> {
@@ -131,6 +150,9 @@ public class RunFragment extends Fragment {
             chronometer.start();
 
             //TODO: CREATE RUN
+            startRunDateTime = LocalDateTime.now();
+            createRun(userUuid, startRunDateTime);
+            Toast.makeText(requireContext(), "initialized run session", Toast.LENGTH_SHORT).show();
 
             //Sensor handling
             startResumeRun();
@@ -143,7 +165,7 @@ public class RunFragment extends Fragment {
             pause.setVisibility(View.GONE);
             stop.setVisibility(View.GONE);
 
-            if(sensorListener != null){
+            if (sensorListener != null) {
                 globalList.addAll(sensorListener.getLocalList());
             }
 
@@ -154,24 +176,35 @@ public class RunFragment extends Fragment {
             chronometer.stop();
             chronometer.setBase(SystemClock.elapsedRealtime());
 
-            //Reset the textView data
+            //Reset the textView data, the field_value are reset?
             calories.setText(String.valueOf(0));
             km.setText(String.valueOf(0));
             averagePace.setText("_'__''");
             actualPace.setText("_'__''");
 
             pause.setImageResource(R.drawable.pause);
+            //2 possibility:
+            // user stop run while it is in pause (no need to create last segment),
+            // user stops run while it is running (it needs to create last segment)
+            //TODO: CLOSE LAST RUN_SEGMENT
+            if (pauseManagement) {
+                LocalDateTime endRunSegmentDateTime = LocalDateTime.now();
+                createRunSegment(runId, startRunDateTime, endRunSegmentDateTime);
+                Toast.makeText(requireContext(), "ended session, uploading last segment", Toast.LENGTH_SHORT).show();
+            } else {
+                //just to test
+                Toast.makeText(requireContext(), "ended session, no need to create last segment", Toast.LENGTH_SHORT).show();
+            }
+
+
             pauseManagement = false;
-
-            //TODO: CLOSE RUN
-
             terminateRun();
-
         });
 
         //setOnClickListener of the Pause ImageButton
         pause.setOnClickListener(v -> {
-            if(pauseManagement){
+            //go to pause
+            if (pauseManagement) {
                 pause.setImageResource(R.drawable.play);
                 pauseManagement = false;
 
@@ -181,11 +214,14 @@ public class RunFragment extends Fragment {
                 timeWhenStopped = chronometer.getBase() - SystemClock.elapsedRealtime();
                 chronometer.stop();
 
-                //TODO: CREATE RUN FRAGMENT
+                //TODO: CLOSE RUN FRAGMENT
+                LocalDateTime endRunSegmentDateTime = LocalDateTime.now();
+                createRunSegment(runId, startRunDateTime, endRunSegmentDateTime);
+                Toast.makeText(requireContext(), "close runSegment successfully, pause the app", Toast.LENGTH_SHORT).show();
 
                 stopPauseRun();
                 //create a run part object and push it in firebase
-            }else{
+            } else { //put in pause, close run segment
                 pause.setImageResource(R.drawable.pause);
                 pauseManagement = true;
 
@@ -194,51 +230,50 @@ public class RunFragment extends Fragment {
                 timeWhenStopped = 0;
                 chronometer.start();
 
-                //TODO: CLOSE RUN FRAGMENT (?)
+                //TODO: CREATE RUN FRAGMENT -> the runSegment will be created on pause, on resume we will define only the new beginning time
+                startRunDateTime = LocalDateTime.now();
+                Toast.makeText(requireContext(), "updated new segment starTime, resuming the app", Toast.LENGTH_SHORT).show();
 
                 startResumeRun();
             }
         });
     }
 
-    //Method used to send the data to Firebase
-    public void terminateRun(){
-
-        //TODO 1 : push the data to firebase
+    public void terminateRun() {
         globalList.removeAll(globalList);
     }
 
     //Method used to activate the sensorListener when the user press start or resume buttons
-    public void startResumeRun(){
+    public void startResumeRun() {
         if (accSensor == null) {
             Log.e("SensorError", "Accelerometer sensor not available");
 
-        }else if(sensorListener == null){
+        } else if (sensorListener == null) {
             sensorListener = new StepCounterListener(this::updateData);
             sensorManager.registerListener(sensorListener, accSensor, SensorManager.SENSOR_DELAY_NORMAL);
         }
     }
 
     //Method used to stop the stepCount listener when the user press pause or stop buttons
-    public void stopPauseRun(){
+    public void stopPauseRun() {
         if (sensorListener != null) {
             sensorManager.unregisterListener(sensorListener);
             sensorListener = null;
         }
     }
 
-    public void updateData(List<LocalDateTime> last){
+    public void updateData(List<LocalDateTime> last) {
 
         //Km values updating
         km_value += (stride_km * 5);
-        if(km_value >= 0.01){
+        if (km_value >= 0.01) {
             km.setText(String.format(Locale.getDefault(), "%.2f", km_value));
         }
 
 
         //Calories value updating
-        calories_value =  km_value * weight_kg;
-        if(calories_value >= 1){
+        calories_value = km_value * weight_kg;
+        if (calories_value >= 1) {
             calories.setText(String.valueOf((int) calories_value));
         }
 
@@ -275,15 +310,15 @@ public class RunFragment extends Fragment {
 
 
         //Notifies the user when each kilometer is reached
-        if((int) km_value > lastIntKmValue){
+        if ((int) km_value > lastIntKmValue) {
             Log.d("Tag", "Ciao");
-            textToSpeech.speak("" + (int) km_value + "kilometers, average pace:" + averagePaceMinPart +" minutes," + averagePaceSecPart+ "seconds per kilometer.",
+            textToSpeech.speak("" + (int) km_value + "kilometers, average pace:" + averagePaceMinPart + " minutes," + averagePaceSecPart + "seconds per kilometer.",
                     TextToSpeech.QUEUE_FLUSH, null, null);
             lastIntKmValue = (int) km_value;
         }
     }
 
-        @Override
+    @Override
     public void onDestroyView() {
         if (textToSpeech != null) {
             textToSpeech.stop();
@@ -293,6 +328,62 @@ public class RunFragment extends Fragment {
         super.onDestroyView();
         binding = null;
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
+
+    public void createRun(String userUuid, LocalDateTime startDateTime) {
+        //this field will be updated for each new run.
+        this.runId = UUID.randomUUID().toString();
+        // Create a new document with a generated ID
+        Map<String, Object> data = new HashMap<>();
+        data.put("runId", runId);
+        data.put("userUuid", userUuid);
+        data.put("startDateTime", FirestoreHelper.getFirebaseTimestampFromLocalDateTime(startDateTime));
+
+        FirestoreHelper.getDb().collection("runs")
+                .add(data)
+                .addOnSuccessListener(documentReference -> {
+                    // Document added successfully
+                    Log.d("successRun creation", "DocumentSnapshot added with ID: " + documentReference.getId());
+                })
+                .addOnFailureListener(e -> {
+                    //if run instance fails to be created, reset all the condition or navigate elsewhere
+                    Log.w("failedRun creation", "Error adding document", e);
+                });
+    }
+
+    public void createRunSegment(String runId, LocalDateTime startDateTime, LocalDateTime endDateTime) {
+        // Create a new document with a generated ID
+        Map<String, Object> data = new HashMap<>();
+        data.put("runId", runId);
+        data.put("steps", stride_km);
+        data.put("calories", calories_value);
+        data.put("km", km_value);
+        data.put("actualPace", actualPace_value);
+        data.put("averagePace_value", averagePace_value);
+        data.put("startDateTime", FirestoreHelper.getFirebaseTimestampFromLocalDateTime(startDateTime));
+        data.put("endDateTime", FirestoreHelper.getFirebaseTimestampFromLocalDateTime(endDateTime));
+
+
+        FirestoreHelper.getDb().collection("runSegments")
+                .add(data)
+                .addOnSuccessListener(documentReference -> {
+                    // Document added successfully
+                    Log.d("runSegments creation", "DocumentSnapshot added with ID: " + documentReference.getId());
+
+                })
+                .addOnFailureListener(e -> {
+                    // Handle errors
+                    //Log.w(TAG, "Error adding document", e);
+                    Log.w("failed runSegments creation", "Error adding document", e);
+                });
+    }
+
 
 }
 
@@ -304,7 +395,7 @@ public class RunFragment extends Fragment {
 ////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////
 
-class  StepCounterListener implements SensorEventListener {
+class StepCounterListener implements SensorEventListener {
 
     List<Integer> accSeries = new ArrayList<>();
     private double accMag = 0;
@@ -331,7 +422,7 @@ class  StepCounterListener implements SensorEventListener {
             float z = sensorEvent.values[2];
 
             // Computing the magnitude for the acceleration
-            accMag = Math.sqrt(x*x+y*y+z*z);
+            accMag = Math.sqrt(x * x + y * y + z * z);
 
             //Storing the magnitude for the acceleration in accSeries
             accSeries.add((int) accMag);
@@ -339,6 +430,7 @@ class  StepCounterListener implements SensorEventListener {
             peakDetection();
         }
     }
+
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
 
@@ -354,10 +446,10 @@ class  StepCounterListener implements SensorEventListener {
             return;
         }
 
-        List<Integer> valuesInWindow = accSeries.subList(lastAddedIndex,currentSize);
+        List<Integer> valuesInWindow = accSeries.subList(lastAddedIndex, currentSize);
         lastAddedIndex = currentSize;
 
-        for (int i = 1; i < valuesInWindow.size()-1; i++) {
+        for (int i = 1; i < valuesInWindow.size() - 1; i++) {
             int forwardSlope = valuesInWindow.get(i + 1) - valuesInWindow.get(i);
             int downwardSlope = valuesInWindow.get(i) - valuesInWindow.get(i - 1);
 
@@ -373,15 +465,17 @@ class  StepCounterListener implements SensorEventListener {
         localList.add(LocalDateTime.now());
 
         //Every 5 steps, we update the data
-        if(localList.size() % 5 == 0){
+        if (localList.size() % 5 == 0) {
             updateDataListener.onUpdateData(new ArrayList<>(localList.subList(localList.size() - 5, localList.size())));
         }
 
     }
 
     //Get method of the localList of steps
-    public List<LocalDateTime> getLocalList(){
+    public List<LocalDateTime> getLocalList() {
         return localList;
     }
 
 }
+
+

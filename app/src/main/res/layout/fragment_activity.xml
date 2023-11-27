@@ -3,28 +3,28 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity" >
+    tools:context=".MainActivity">
 
     <LinearLayout
         android:id="@+id/headerView"
-        android:orientation="vertical"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true" >
-    </LinearLayout>
+        android:layout_alignParentTop="true"
+        android:orientation="vertical"></LinearLayout>
 
     <ScrollView
         android:id="@+id/scrollableContent"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@+id/footerView"
-        android:layout_below="@+id/headerView" >
+        android:layout_below="@+id/headerView"
+        android:layout_marginBottom="50dp">
 
         <LinearLayout
             android:id="@+id/cardContainer"
-            android:orientation="vertical"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" >
+            android:layout_height="match_parent"
+            android:orientation="vertical">
 
             <!--add card dynamically -->
 
@@ -33,10 +33,9 @@
 
     <LinearLayout
         android:id="@+id/footerView"
-        android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true" >
-    </LinearLayout>
+        android:layout_alignParentBottom="true"
+        android:orientation="vertical"></LinearLayout>
 
 </RelativeLayout>
