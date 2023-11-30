@@ -108,6 +108,7 @@ public class FirestoreHelper {
         data.put("steps", steps);
         data.put("startDateTime", getFirebaseTimestampFromLocalDateTime(startDateTime));
         data.put("endDateTime", getFirebaseTimestampFromLocalDateTime(endDateTime));
+        data.put("calories", calories);
 
 
         db.collection("runSegments")

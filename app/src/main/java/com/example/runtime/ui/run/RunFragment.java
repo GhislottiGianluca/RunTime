@@ -21,8 +21,6 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.example.runtime.LoginActivity;
-import com.example.runtime.MainActivity;
 import com.example.runtime.R;
 import com.example.runtime.databinding.FragmentRunBinding;
 import com.example.runtime.firestore.FirestoreHelper;
@@ -50,11 +48,17 @@ public class RunFragment extends Fragment {
     //Users data, these data will come from the user's model
     private float height_cm = 170.0f;
     private float weight_kg = 65.5f;
-    private final float stride_km = (float) (height_cm * 1.4) / 1_000_000;
+    private final float stride_km = (float) (height_cm * 0.65) / 1_000_000;
+
+    //Run data
     private float km_value = 0;
     private float calories_value = 0;
     private double actualPace_value;
     private double averagePace_value;
+
+    //Run segment data
+    private float km_local_value;
+    private float calories_local_value;
 
     // Data running textView
     private TextView averagePace;
@@ -72,6 +76,7 @@ public class RunFragment extends Fragment {
     private StepCounterListener sensorListener;
 
     List<LocalDateTime> globalList = new ArrayList<>();
+    List<LocalDateTime> localList = new ArrayList<>();
 
     //Variables used to speech every km
     TextToSpeech textToSpeech;
@@ -161,28 +166,23 @@ public class RunFragment extends Fragment {
 
         //setOnClickListener of the Stop ImageButton
         stop.setOnClickListener(v -> {
+            //Buttons settings
             play.setVisibility(View.VISIBLE);
             pause.setVisibility(View.GONE);
             stop.setVisibility(View.GONE);
+            pause.setImageResource(R.drawable.pause);
 
             if (sensorListener != null) {
                 globalList.addAll(sensorListener.getLocalList());
             }
 
-            //Sensor handling
-            stopPauseRun();
-
             //Chronometer handling
             chronometer.stop();
             chronometer.setBase(SystemClock.elapsedRealtime());
 
-            //Reset the textView data, the field_value are reset?
-            calories.setText(String.valueOf(0));
-            km.setText(String.valueOf(0));
-            averagePace.setText("_'__''");
-            actualPace.setText("_'__''");
+            pauseManagement = false;
 
-            pause.setImageResource(R.drawable.pause);
+
             //2 possibility:
             // user stop run while it is in pause (no need to create last segment),
             // user stops run while it is running (it needs to create last segment)
@@ -196,9 +196,11 @@ public class RunFragment extends Fragment {
                 Toast.makeText(requireContext(), "ended session, no need to create last segment", Toast.LENGTH_SHORT).show();
             }
 
-
-            pauseManagement = false;
+            //reset the data
             terminateRun();
+
+            //Sensor handling
+            stopPauseRun();
         });
 
         //setOnClickListener of the Pause ImageButton
@@ -219,8 +221,11 @@ public class RunFragment extends Fragment {
                 createRunSegment(runId, startRunDateTime, endRunSegmentDateTime);
                 Toast.makeText(requireContext(), "close runSegment successfully, pause the app", Toast.LENGTH_SHORT).show();
 
+                // Reset the fragment data
+                pauseRun();
+
                 stopPauseRun();
-                //create a run part object and push it in firebase
+
             } else { //put in pause, close run segment
                 pause.setImageResource(R.drawable.pause);
                 pauseManagement = true;
@@ -239,8 +244,32 @@ public class RunFragment extends Fragment {
         });
     }
 
+
+    // Method used to reset the field of the class and the textview at the end of the running session
     public void terminateRun() {
+
+        //reset the field data
         globalList.removeAll(globalList);
+        localList.removeAll(localList);
+        calories_value = 0;
+        km_value = 0;
+        averagePace_value = 0.0;
+        actualPace_value = 0.0;
+
+        //Reset the textView data
+        calories.setText(String.valueOf(0));
+        km.setText(String.valueOf(0));
+        averagePace.setText("_'__''");
+        actualPace.setText("_'__''");
+
+    }
+
+    //Method used to reset the field of the single fragment session
+    public void pauseRun(){
+
+        km_local_value = 0;
+        calories_local_value = 0;
+        localList.removeAll(localList);
     }
 
     //Method used to activate the sensorListener when the user press start or resume buttons
@@ -270,6 +299,9 @@ public class RunFragment extends Fragment {
             km.setText(String.format(Locale.getDefault(), "%.2f", km_value));
         }
 
+        //Km values for the single segment updated
+        km_local_value += (stride_km * 5);
+
 
         //Calories value updating
         calories_value = km_value * weight_kg;
@@ -277,17 +309,21 @@ public class RunFragment extends Fragment {
             calories.setText(String.valueOf((int) calories_value));
         }
 
+        //Calories for the single fragment updated
+        calories_local_value = km_local_value * weight_kg;
+
 
         //Add the new step to the global list
         globalList.addAll(last);
+        localList.addAll(last);
 
 
         //Actual Pace
-        averagePace_value = ChronoUnit.MILLIS.between(last.get(0), last.get(4)) / 60000.0;
-        if (stride_km > 0 && averagePace_value > 0) {
-            double actualPace_value = averagePace_value / (stride_km * 5);
-            int actualPaceMinPart = (int) actualPace_value;
-            int actualPaceSecPart = (int) ((actualPace_value - actualPaceMinPart) * 60);
+        actualPace_value = ChronoUnit.MILLIS.between(last.get(0), last.get(4)) / 60000.0;
+        if (stride_km > 0 && actualPace_value > 0) {
+            double actualPace_valued = actualPace_value / (stride_km * 5);
+            int actualPaceMinPart = (int) actualPace_valued;
+            int actualPaceSecPart = (int) ((actualPace_valued - actualPaceMinPart) * 60);
             String actualPaceFormatted = actualPaceMinPart + "'" + actualPaceSecPart + "''";
             actualPace.setText(actualPaceFormatted);
         } else {
@@ -361,9 +397,9 @@ public class RunFragment extends Fragment {
         // Create a new document with a generated ID
         Map<String, Object> data = new HashMap<>();
         data.put("runId", runId);
-        data.put("steps", stride_km);
-        data.put("calories", calories_value);
-        data.put("km", km_value);
+        data.put("steps", localList.size());
+        data.put("calories", calories_local_value);
+        data.put("km", km_local_value);
         data.put("actualPace", actualPace_value);
         data.put("averagePace_value", averagePace_value);
         data.put("startDateTime", FirestoreHelper.getFirebaseTimestampFromLocalDateTime(startDateTime));

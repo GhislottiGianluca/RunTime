@@ -96,6 +96,7 @@ public class ActivityFragment extends Fragment {
                         Run run = document.toObject(Run.class);
                         runs.add(run);
                     }
+
                     runs.forEach(run -> Log.d(run.getRunId(), "at time " + run.getStartDateTime()));
                     Log.w("Update UI", "try  to updating ui");
                     //to reflect the changes
