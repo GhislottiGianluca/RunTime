@@ -40,18 +40,50 @@
             app:layout_constraintTop_toTopOf="parent"
             tools:layout_editor_absoluteX="16dp" />
 
+        <LinearLayout
+            android:id="@+id/linearLayout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:orientation="horizontal"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.571"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/editTextUsername">
+
+            <EditText
+                android:id="@+id/weight"
+                android:layout_width="135dp"
+                android:layout_height="50dp"
+                android:layout_marginRight="20dp"
+                android:background="@drawable/edit_text_background"
+                android:hint="@string/hintWeight"
+                android:inputType="numberDecimal"
+                android:paddingHorizontal="20dp" />
+
+            <EditText
+                android:id="@+id/height"
+                android:layout_width="135dp"
+                android:layout_height="50dp"
+                android:background="@drawable/edit_text_background"
+                android:hint="@string/hintHeight"
+                android:inputType="number"
+                android:paddingHorizontal="20dp" />
+        </LinearLayout>
+
         <EditText
             android:id="@+id/editTextPassword"
             android:layout_width="match_parent"
             android:layout_height="50dp"
-            android:layout_marginTop="48dp"
+            android:layout_marginTop="44dp"
             android:background="@drawable/edit_text_background"
             android:hint="@string/hintPassword"
             android:inputType="textPassword"
             android:paddingHorizontal="20dp"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/editTextUsername" />
+            app:layout_constraintTop_toBottomOf="@+id/linearLayout" />
 
         <EditText
             android:id="@+id/editTextRepeatPassword"
@@ -64,9 +96,10 @@
             android:paddingHorizontal="20dp"
             app:layout_constraintBottom_toTopOf="@+id/buttonCreateAccount"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/editTextPassword"
-            app:layout_constraintVertical_bias="0.035" />
+            app:layout_constraintVertical_bias="0.0" />
 
         <TextView
             android:id="@+id/alreadyAnAccount"
@@ -96,6 +129,8 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent" />
+
+
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>

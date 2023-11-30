@@ -3,6 +3,8 @@
     <string name="welcomeLogin">Welcome to RunTime</string>
     <string name="hintUsername">Username</string>
     <string name="hintPassword">Password</string>
+    <string name="hintHeight">Height - cm</string>
+    <string name="hintWeight">Weight - Kg</string>
     <string name="hintRepeatPassword">Repeat password</string>
     <string name="register">Register</string>
     <string name="welcomeRegister">Create new RunTime account</string>

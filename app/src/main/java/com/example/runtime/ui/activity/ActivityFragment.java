@@ -22,9 +22,11 @@ import com.example.runtime.ui.activityDetails.ActivityDetail;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.core.OrderBy;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class ActivityFragment extends Fragment {
@@ -87,8 +89,9 @@ public class ActivityFragment extends Fragment {
     }
 
     private void getRunsByUserUuidFromBackend(String userUuid, List<Run> runs, LinearLayout cardContainer) {
+        //problem with startDateTime descending
         FirestoreHelper.getDb().collection("runs")
-                .whereEqualTo("userUuid", userUuid).get()
+                .whereEqualTo("userUuid", userUuid).orderBy("startDateTime", Query.Direction.ASCENDING).get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     Log.w("RUN", "try to deserialize run");
                     for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
@@ -100,6 +103,7 @@ public class ActivityFragment extends Fragment {
                     runs.forEach(run -> Log.d(run.getRunId(), "at time " + run.getStartDateTime()));
                     Log.w("Update UI", "try  to updating ui");
                     //to reflect the changes
+                    Collections.reverse(runs);
                     updateUI(runs, cardContainer);
                 })
                 .addOnFailureListener(e -> {

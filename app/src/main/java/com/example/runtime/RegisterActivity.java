@@ -22,6 +22,8 @@ public class RegisterActivity extends AppCompatActivity {
     private EditText usernameEditText;
     private EditText passwordEditText;
     private EditText repeatPasswordEditText;
+    private EditText heightEditText;
+    private EditText weightEditText;
     private TextView alreadyRegisteredText;
     private Button createAccountButton;
 
@@ -35,6 +37,8 @@ public class RegisterActivity extends AppCompatActivity {
         usernameEditText = findViewById(R.id.editTextUsername);
         passwordEditText = findViewById(R.id.editTextPassword);
         repeatPasswordEditText = findViewById(R.id.editTextRepeatPassword);
+        heightEditText = findViewById(R.id.height);
+        weightEditText = findViewById(R.id.weight);
         alreadyRegisteredText = findViewById(R.id.alreadyAnAccount);
         createAccountButton = findViewById(R.id.buttonCreateAccount);
 
@@ -42,11 +46,13 @@ public class RegisterActivity extends AppCompatActivity {
             String username = usernameEditText.getText().toString();
             String password = passwordEditText.getText().toString();
             String repeatPassword = repeatPasswordEditText.getText().toString();
+            String height = heightEditText.getText().toString();
+            String weight = weightEditText.getText().toString();
 
-            if (isPasswordMatching(password, repeatPassword)) {
-                ifUsernameAvailableCreateUser(username, password);
+            if (isPasswordMatchingAndDataInserted(password, repeatPassword, weight, height)) {
+                ifUsernameAvailableCreateUser(username, password,  weight, height);
             } else {
-                Toast.makeText(RegisterActivity.this, "Password and repeatPassword are different", Toast.LENGTH_SHORT).show();
+                Toast.makeText(RegisterActivity.this, "Password and repeatPassword are different or not all data are filled", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -56,7 +62,7 @@ public class RegisterActivity extends AppCompatActivity {
         });
     }
 
-    private void ifUsernameAvailableCreateUser(String username, String password) {
+    private void ifUsernameAvailableCreateUser(String username, String password, String weight, String height) {
         FirestoreHelper.getDb().collection("users")
                 .whereEqualTo("username", username)
                 .get()
@@ -65,7 +71,7 @@ public class RegisterActivity extends AppCompatActivity {
                         if (!task.getResult().isEmpty()) {
                             Toast.makeText(RegisterActivity.this, "Username not available, please change it", Toast.LENGTH_SHORT).show();
                         } else {
-                            createUser(username, password);
+                            createUser(username, password, weight, height);
                         }
                     } else {
                         Log.e(TAG, "Error checking username availability", task.getException());
@@ -73,16 +79,18 @@ public class RegisterActivity extends AppCompatActivity {
                 });
     }
 
-    private boolean isPasswordMatching(String password, String repeatPassword) {
-        return password.equals(repeatPassword);
+    private boolean isPasswordMatchingAndDataInserted(String password, String repeatPassword, String weight, String height) {
+        return password.equals(repeatPassword) && !weight.isEmpty() && !height.isEmpty();
     }
 
-    private void createUser(String username, String password) {
+    private void createUser(String username, String password,  String weight, String height) {
         String uuid = UUID.randomUUID().toString();
         Map<String, Object> data = new HashMap<>();
         data.put("uuid", uuid);
         data.put("username", username);
         data.put("password", password);
+        data.put("weight", weight);
+        data.put("height", height);
 
         FirestoreHelper.getDb().collection("users")
                 .add(data)

@@ -5,6 +5,11 @@ public class User {
     private String password;
     private String uuid;
 
+    private String height;
+
+    private String weight;
+
+
     public User(String username, String password, String uuid) {
         this.username = username;
         this.password = password;
@@ -35,4 +40,11 @@ public class User {
         return uuid;
     }
 
+    public String getWeight() {
+        return weight;
+    }
+
+    public String getHeight() {
+        return height;
+    }
 }
