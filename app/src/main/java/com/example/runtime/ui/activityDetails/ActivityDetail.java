@@ -33,7 +33,6 @@ public class ActivityDetail extends AppCompatActivity {
         String runId = getIntent().getStringExtra("runId");
 
         TextView textView = findViewById(R.id.detailTitle);
-        textView.setText("Beccati sto TRAPEZIO!! \n\n" + runId + "\n\n" + "Per Favoreh");
 
         List<RunSegment> runSegments = new ArrayList<>();
         LinearLayout infoContainer = findViewById(R.id.infoContainer);

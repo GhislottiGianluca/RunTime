@@ -55,6 +55,7 @@ public class RunFragment extends Fragment {
     private float calories_value = 0;
     private double actualPace_value;
     private double averagePace_value;
+    private String averagePaceFormatted;
 
     //Run segment data
     private float km_local_value;
@@ -255,6 +256,7 @@ public class RunFragment extends Fragment {
         km_value = 0;
         averagePace_value = 0.0;
         actualPace_value = 0.0;
+        averagePaceFormatted = "";
 
         //Reset the textView data
         calories.setText(String.valueOf(0));
@@ -338,7 +340,7 @@ public class RunFragment extends Fragment {
             averagePace_value = averagePace_value / km_value;
             averagePaceMinPart = (int) averagePace_value;
             averagePaceSecPart = (int) ((averagePace_value - averagePaceMinPart) * 60);
-            String averagePaceFormatted = averagePaceMinPart + "'" + averagePaceSecPart + "''";
+            averagePaceFormatted = averagePaceMinPart + "'" + averagePaceSecPart + "''";
             averagePace.setText(averagePaceFormatted);
         } else {
             averagePace.setText("N/A");
@@ -400,8 +402,7 @@ public class RunFragment extends Fragment {
         data.put("steps", localList.size());
         data.put("calories", calories_local_value);
         data.put("km", km_local_value);
-        data.put("actualPace", actualPace_value);
-        data.put("averagePace_value", averagePace_value);
+        data.put("averagePace_value", averagePaceFormatted);
         data.put("startDateTime", FirestoreHelper.getFirebaseTimestampFromLocalDateTime(startDateTime));
         data.put("endDateTime", FirestoreHelper.getFirebaseTimestampFromLocalDateTime(endDateTime));
 
