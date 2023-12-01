@@ -402,7 +402,7 @@ public class RunFragment extends Fragment {
         data.put("steps", localList.size());
         data.put("calories", calories_local_value);
         data.put("km", km_local_value);
-        data.put("averagePace_value", averagePaceFormatted);
+        data.put("averagePace", averagePace_value);
         data.put("startDateTime", FirestoreHelper.getFirebaseTimestampFromLocalDateTime(startDateTime));
         data.put("endDateTime", FirestoreHelper.getFirebaseTimestampFromLocalDateTime(endDateTime));
 

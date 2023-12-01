@@ -65,7 +65,7 @@ public class ActivityDetail extends AppCompatActivity {
     }
 
     private void updateUI(List<RunSegment> itemList, LinearLayout infoContainer) {
-        if(itemList.isEmpty()){
+        if (itemList.isEmpty()) {
             return;
         }
         //property prep
@@ -81,20 +81,28 @@ public class ActivityDetail extends AppCompatActivity {
         }*/
 
         int totalSteps = itemList.stream().mapToInt(RunSegment::getSteps).sum();
-        //considering a 0.8m step-width
-        double totalDistanceKM = totalSteps * 0.8 / 1000;
+        //double totalDistanceKM = totalSteps * 0.8 / 1000;
+        double totalDistanceKM = itemList.stream().mapToDouble(item -> item.getKm()).sum();
+        double calories = itemList.stream().mapToDouble(item -> item.getCalories()).sum();
+
+        double averagePace = itemList.stream().mapToDouble(item -> item.getAveragePace()).sum() / itemList.size();
+        Log.d("avgpace", String.valueOf(itemList.get(0).getAveragePace()));
+        //double averagePace = itemList.get(0).getAveragePace();
+        createInfoItem("startRun", FirestoreHelper.formatDateTimeWithSecondos(startRun), infoContainer);
+        createInfoItem("endRun", FirestoreHelper.formatDateTimeWithSecondos(endRun), infoContainer);
+        createInfoItem("totalDurationInMinutes", String.valueOf(totalDuration.toMinutes()), infoContainer);
 
         createInfoItem("Nr.steps", String.valueOf(totalSteps), infoContainer);
+        createInfoItem("average_pace", String.valueOf(averagePace), infoContainer);
         createInfoItem("totalDistanceKM", String.valueOf(totalDistanceKM), infoContainer);
-        createInfoItem("startRun", startRun.toString(), infoContainer);
-        createInfoItem("endRun", endRun.toString(), infoContainer);
-        createInfoItem("totalDurationInMinutes", String.valueOf(totalDuration.toMinutes()), infoContainer);
-        createInfoItem("totalDurationInSeconds", String.valueOf(totalDuration.getSeconds()), infoContainer);
+        createInfoItem("calories", String.valueOf(calories), infoContainer);
+
+        //createInfoItem("totalDurationInSeconds", String.valueOf(totalDuration.getSeconds()), infoContainer);
 
 
     }
 
-    private void createInfoItem(String titleText, String propertyText, LinearLayout layout){
+    private void createInfoItem(String titleText, String propertyText, LinearLayout layout) {
         LinearLayout infoLayout = (LinearLayout) LayoutInflater.from(this).inflate(R.layout.info_run_detail, layout, false);
         // Customize the card content based on item data
         TextView title = infoLayout.findViewById(R.id.itemTitle);

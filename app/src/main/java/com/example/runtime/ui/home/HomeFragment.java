@@ -25,11 +25,6 @@ import java.util.List;
 public class HomeFragment extends Fragment {
 
     private FragmentHomeBinding binding;
-    private Button testButton;
-    private Button createRunButton;
-    private Button createSegmentButton;
-    private Button getRun;
-    private Button getSegments;
 
     private Button logoutButton;
 
@@ -46,33 +41,8 @@ public class HomeFragment extends Fragment {
         final TextView textView = binding.textHome;
         homeViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
 
-        //testButton = binding.buttonTest;
-        createRunButton = binding.buttonRunCreate;
-        createSegmentButton = binding.buttonRunSegCreate;
-        getRun = binding.buttonGetRuns;
-        getSegments = binding.buttonGetSegments;
+
         logoutButton = binding.buttonLogout;
-
-
-      /*  testButton.setOnClickListener(e -> {
-            FirestoreHelper.createUser("Cristo", "Risorto");
-        });*/
-
-        createRunButton.setOnClickListener(e -> {
-            FirestoreHelper.createRun("1538fefe-256b-464e-b9cb-5ed8848043e8", LocalDateTime.now());
-        });
-
-        createSegmentButton.setOnClickListener(e -> {
-            FirestoreHelper.createRunSegment("12914a82-3482-407d-b8f8-594899243ddc", 15000, LocalDateTime.now(), LocalDateTime.now().plusHours(3), 5);
-        });
-
-        getRun.setOnClickListener(e -> {
-           FirestoreHelper.getRunsByUuidAndStartDateTimeInRange("1538fefe-256b-464e-b9cb-5ed8848043e8", LocalDateTime.now().minusHours(4), LocalDateTime.now().plusHours(5));
-        });
-
-        getSegments.setOnClickListener(e -> {
-            FirestoreHelper.getRunSegmentsByRunId("12914a82-3482-407d-b8f8-594899243ddc");
-        });
 
         logoutButton.setOnClickListener(e -> {
             SharedPreferencesHelper.clearSP(requireContext());

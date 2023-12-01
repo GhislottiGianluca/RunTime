@@ -8,7 +8,13 @@ public class RunSegment {
     private String runId;
     private int steps;
     private Timestamp startDateTime;
+
     private Timestamp endDateTime;
+
+    private Double km;
+    private double averagePace;
+
+    private double calories;
 
     public RunSegment(String runId, int steps, Timestamp startDateTime, Timestamp endDateTime) {
         this.runId = runId;
@@ -44,6 +50,18 @@ public class RunSegment {
 
     public Timestamp getEndDateTime() {
         return endDateTime;
+    }
+
+    public Double getKm() {
+        return km;
+    }
+
+    public double getAveragePace() {
+        return averagePace;
+    }
+
+    public double getCalories() {
+        return calories;
     }
 
     public void setRunId(String runId) {

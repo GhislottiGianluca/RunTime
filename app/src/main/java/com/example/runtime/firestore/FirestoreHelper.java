@@ -41,6 +41,13 @@ public class FirestoreHelper {
         return dateTime.format(formatter);
     }
 
+    public static String formatDateTimeWithSecondos(LocalDateTime dateTime) {
+        DateTimeFormatter formatter = DateTimeFormatter
+                .ofPattern("d MMM yyyy, 'at' HH:mm:ss", Locale.ENGLISH);
+
+        return dateTime.format(formatter);
+    }
+
     public static Timestamp getFirebaseTimestampFromLocalDateTime(LocalDateTime date) {
         Instant instant = date.atZone(ZoneId.systemDefault()).toInstant();
         return new Timestamp(instant.toEpochMilli() / 1000, (int) ((instant.toEpochMilli() % 1000) * 1000000));
