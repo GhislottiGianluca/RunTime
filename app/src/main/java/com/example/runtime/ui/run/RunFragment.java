@@ -1,12 +1,16 @@
 package com.example.runtime.ui.run;
 
 import android.content.Context;
+import android.content.Intent;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.speech.RecognitionListener;
+import android.speech.RecognizerIntent;
+import android.speech.SpeechRecognizer;
 import android.speech.tts.TextToSpeech;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -81,6 +85,12 @@ public class RunFragment extends Fragment {
 
     //Variables used to speech every km
     TextToSpeech textToSpeech;
+
+    //Variable used for the speech
+    private SpeechRecognizer speechRecognizer;
+    private Intent intentRecognizer;
+
+
     //Variable used to track every integer number of km reached by the user
     int lastIntKmValue = 0;
 
@@ -130,6 +140,11 @@ public class RunFragment extends Fragment {
             }
         });
 
+        //Speech recognizer variable initialisation
+        intentRecognizer = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        intentRecognizer.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this.getContext());
+
         setButtonListener(userUuid);
 
         return root;
@@ -143,6 +158,13 @@ public class RunFragment extends Fragment {
 
     private void setButtonListener(String userUuid) {
 
+        playButton(userUuid);
+        pauseButton(userUuid);
+        stopButton(userUuid);
+
+    }
+
+    private void playButton(String userUuid) {
         //setOnClickListener of the Play ImageButton
         play.setOnClickListener(v -> {
             play.setVisibility(View.GONE);
@@ -163,8 +185,54 @@ public class RunFragment extends Fragment {
             //Sensor handling
             startResumeRun();
 
-        });
+            //setting the speechRecognizer
+            speechRecognizer.setRecognitionListener(new RecognitionListener() {
+                //All those methods are the default method override from the RecognitionListener()
+                @Override
+                public void onReadyForSpeech(Bundle params) {}
+                @Override
+                public void onBeginningOfSpeech() {}
+                @Override
+                public void onRmsChanged(float rmsdB) {}
+                @Override
+                public void onBufferReceived(byte[] buffer) {}
+                @Override
+                public void onEndOfSpeech() {}
+                @Override
+                public void onError(int error) {}
+                @Override
+                public void onResults(Bundle results) {
+                    ArrayList<String> matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+                    if (matches != null && !matches.isEmpty()) {
+                        String result = matches.get(0);
 
+                        if (result.equalsIgnoreCase("RUNTIME PAUSE")) {
+                            pauseButton(userUuid);
+                            stopSpeechRecognizer();
+                        } else if (result.equalsIgnoreCase("RUNTIME STOP")) {
+                            stopButton(userUuid);
+                            stopSpeechRecognizer();
+                        }
+                    }
+                }
+
+                private void stopSpeechRecognizer() {
+                    if (speechRecognizer != null) {
+                        speechRecognizer.stopListening();
+                        speechRecognizer.destroy();
+                    }
+                }
+
+                @Override
+                public void onPartialResults(Bundle partialResults) {}
+                @Override
+                public void onEvent(int eventType, Bundle params) {}
+            });
+
+        });
+    }
+
+    private void stopButton(String userUuid) {
         //setOnClickListener of the Stop ImageButton
         stop.setOnClickListener(v -> {
             //Buttons settings
@@ -203,7 +271,9 @@ public class RunFragment extends Fragment {
             //Sensor handling
             stopPauseRun();
         });
+    }
 
+    private void pauseButton(String userUuid) {
         //setOnClickListener of the Pause ImageButton
         pause.setOnClickListener(v -> {
             //go to pause
