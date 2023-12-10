@@ -2,7 +2,11 @@ package com.example.runtime.firestore.models;
 
 import com.google.firebase.Timestamp;
 
+import org.osmdroid.util.GeoPoint;
+
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Map;
 
 public class RunSegment {
     private String runId;
@@ -15,6 +19,8 @@ public class RunSegment {
     private double averagePace;
 
     private double calories;
+
+    private ArrayList<GeoPoint> geoPoints = new ArrayList<>();
 
     public RunSegment(String runId, int steps, Timestamp startDateTime, Timestamp endDateTime) {
         this.runId = runId;
@@ -64,6 +70,10 @@ public class RunSegment {
         return calories;
     }
 
+    public ArrayList<GeoPoint> getGeoPoints() {
+        return geoPoints;
+    }
+
     public void setRunId(String runId) {
         this.runId = runId;
     }
@@ -78,5 +88,24 @@ public class RunSegment {
 
     public void setEndDateTime(Timestamp endDateTime) {
         this.endDateTime = endDateTime;
+    }
+
+    public void setGeoPoints(ArrayList<Map<String, Double>> geoPoints) {
+        if (geoPoints == null || geoPoints.isEmpty()) {
+            return;
+        }
+
+        ArrayList<GeoPoint> geoPointArrayList = new ArrayList<>();
+        for (Map<String, Double> geopoint : geoPoints) {
+            if (geopoint != null && geopoint.containsKey("latitude") && geopoint.containsKey("longitude")) {
+                Double latitude = geopoint.get("latitude");
+                Double longitude = geopoint.get("longitude");
+
+                if (latitude != null && longitude != null) {
+                    geoPointArrayList.add(new GeoPoint(latitude, longitude));
+                }
+            }
+        }
+        this.geoPoints = geoPointArrayList;
     }
 }

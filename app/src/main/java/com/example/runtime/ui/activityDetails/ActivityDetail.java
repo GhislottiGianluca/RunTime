@@ -1,5 +1,6 @@
 package com.example.runtime.ui.activityDetails;
 
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -16,13 +17,24 @@ import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
+import org.osmdroid.api.IMapController;
+import org.osmdroid.config.Configuration;
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
+import org.osmdroid.util.GeoPoint;
+import org.osmdroid.views.MapView;
+import org.osmdroid.views.overlay.Polyline;
+
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+import firebase.com.protolitewrapper.BuildConfig;
+
 public class ActivityDetail extends AppCompatActivity {
+
+    private MapView mapView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,9 +49,18 @@ public class ActivityDetail extends AppCompatActivity {
         List<RunSegment> runSegments = new ArrayList<>();
         LinearLayout infoContainer = findViewById(R.id.infoContainer);
 
+        // Set the user agent for osmdroid
+        Configuration.getInstance().setUserAgentValue(BuildConfig.APPLICATION_ID);
+
+
         //testBackend
         getItemsFromBackend(runId, runSegments, infoContainer);
         updateUI(runSegments, infoContainer);
+
+        mapView = findViewById(R.id.mapView);
+        mapView.setTileSource(TileSourceFactory.MAPNIK);
+        mapView.setBuiltInZoomControls(true);
+        mapView.setMultiTouchControls(true);
     }
 
     private void getItemsFromBackend(String runId, List<RunSegment> runSegments, LinearLayout infoContainer) {
@@ -64,15 +85,38 @@ public class ActivityDetail extends AppCompatActivity {
                 });
     }
 
-    private void updateUI(List<RunSegment> itemList, LinearLayout infoContainer) {
-        if (itemList.isEmpty()) {
+    private void updateUI(List<RunSegment> runSegments, LinearLayout infoContainer) {
+        if (runSegments.isEmpty()) {
             return;
         }
-        //property prep
-        itemList.sort(Comparator.comparing(RunSegment::getStartDateTime));
 
-        LocalDateTime startRun = FirestoreHelper.getLocalDateTimeFromFirebaseTimestamp(itemList.get(0).getStartDateTime());
-        LocalDateTime endRun = FirestoreHelper.getLocalDateTimeFromFirebaseTimestamp(itemList.get(itemList.size() - 1).getEndDateTime());
+        //todo: handling the geopoint and the mapview
+        //runSegments.sort(Comparator.comparing(RunSegment::getStartDateTime));
+
+        runSegments.get(0).getGeoPoints().forEach(item -> Log.e("geopoint", item.getLatitude() + " " + item.getLongitude()));
+
+        ArrayList<GeoPoint> totalpaths = new ArrayList<>();
+        for(RunSegment segment : runSegments){
+            totalpaths.addAll(segment.getGeoPoints());
+        }
+        if (totalpaths.size() > 0) {
+            // Set the map center to the first GeoPoint in the list
+            IMapController mapController = mapView.getController();
+            mapController.setZoom(14.0); // adjust the zoom level as needed
+            mapController.setCenter(totalpaths.get(0));
+
+            // Add a Polyline to connect the GeoPoints
+            Polyline line = new Polyline();
+            line.setPoints(totalpaths);
+            line.setColor(Color.RED);
+            mapView.setTileSource(TileSourceFactory.DEFAULT_TILE_SOURCE);
+            mapView.getOverlayManager().add(line);
+        }
+
+        //property prep
+
+        LocalDateTime startRun = FirestoreHelper.getLocalDateTimeFromFirebaseTimestamp(runSegments.get(0).getStartDateTime());
+        LocalDateTime endRun = FirestoreHelper.getLocalDateTimeFromFirebaseTimestamp(runSegments.get(runSegments.size() - 1).getEndDateTime());
 
         Duration totalDuration = Duration.between(startRun, endRun);
         String totalDurationString = null;
@@ -80,13 +124,13 @@ public class ActivityDetail extends AppCompatActivity {
             totalDurationString = String.format("%02d:%02d:%02d", totalDuration.toHours(), totalDuration.toMinutesPart(), totalDuration.toSecondsPart());
         }*/
 
-        int totalSteps = itemList.stream().mapToInt(RunSegment::getSteps).sum();
+        int totalSteps = runSegments.stream().mapToInt(RunSegment::getSteps).sum();
         //double totalDistanceKM = totalSteps * 0.8 / 1000;
-        double totalDistanceKM = itemList.stream().mapToDouble(item -> item.getKm()).sum();
-        double calories = itemList.stream().mapToDouble(item -> item.getCalories()).sum();
+        double totalDistanceKM = runSegments.stream().mapToDouble(item -> item.getKm()).sum();
+        double calories = runSegments.stream().mapToDouble(item -> item.getCalories()).sum();
 
-        double averagePace = itemList.stream().mapToDouble(item -> item.getAveragePace()).sum() / itemList.size();
-        Log.d("avgpace", String.valueOf(itemList.get(0).getAveragePace()));
+        double averagePace = runSegments.stream().mapToDouble(item -> item.getAveragePace()).sum() / runSegments.size();
+        Log.d("avgpace", String.valueOf(runSegments.get(0).getAveragePace()));
         //double averagePace = itemList.get(0).getAveragePace();
         createInfoItem("startRun", FirestoreHelper.formatDateTimeWithSecondos(startRun), infoContainer);
         createInfoItem("endRun", FirestoreHelper.formatDateTimeWithSecondos(endRun), infoContainer);

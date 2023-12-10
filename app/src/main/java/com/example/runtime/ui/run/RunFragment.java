@@ -1,11 +1,19 @@
 package com.example.runtime.ui.run;
 
+import static android.content.Context.LOCATION_SERVICE;
+
+import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.graphics.drawable.Drawable;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.speech.RecognitionListener;
@@ -22,6 +30,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -30,6 +40,8 @@ import com.example.runtime.databinding.FragmentRunBinding;
 import com.example.runtime.firestore.FirestoreHelper;
 import com.example.runtime.sharedPrefs.SharedPreferencesHelper;
 
+import org.osmdroid.util.GeoPoint;
+
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,6 +49,8 @@ import java.util.List;
 import java.time.LocalDateTime;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.UUID;
 
 public class RunFragment extends Fragment {
@@ -98,6 +112,23 @@ public class RunFragment extends Fragment {
 
     LocalDateTime startRunDateTime = null;
 
+    private ArrayList<GeoPoint> geoPoints = new ArrayList<>();
+    private static final int LOCATION_PERMISSION_REQUEST_CODE = 123; // it is possible to use any value
+    private static final int RECORD_AUDIO_PERMISSION_REQUEST_CODE = 456; // it is possible to use any value
+
+    private int LOCATION_REFRESH_TIME = 5000; // ms
+    private int LOCATION_REFRESH_DISTANCE = 10; // meters
+
+    private final LocationListener mLocationListener = new LocationListener() {
+        @Override
+        public void onLocationChanged(final Location location) {
+            Log.w("gps updates", "Calling gps update");
+            final GeoPoint geoPoint = new GeoPoint(location.getLatitude(), location.getLongitude());
+            geoPoints.add(geoPoint);
+            Toast.makeText(requireContext(), "Collected geoPoint: lat " + geoPoint.getLatitude() + " lon " + geoPoint.getLongitude(), Toast.LENGTH_SHORT).show();
+
+        }
+    };
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -140,14 +171,82 @@ public class RunFragment extends Fragment {
             }
         });
 
+
+        if (!hasAudioRecordPermissions()) {
+            requestAudioRecordPermissions();
+        }
+
         //Speech recognizer variable initialisation
         intentRecognizer = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         intentRecognizer.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this.getContext());
 
+        // Check and request location permissions
+        if (!hasLocationPermissions()) {
+            requestLocationPermissions();
+        }
+
+
+
         setButtonListener(userUuid);
 
         return root;
+    }
+
+    private boolean hasAudioRecordPermissions() {
+        // Check if the app has the necessary location permissions
+        return ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void requestAudioRecordPermissions() {
+        // Request location permissions
+        ActivityCompat.requestPermissions(requireActivity(), new String[]{Manifest.permission.RECORD_AUDIO}, RECORD_AUDIO_PERMISSION_REQUEST_CODE);
+    }
+
+    private boolean hasLocationPermissions() {
+        // Check if the app has the necessary location permissions
+        return ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void requestLocationPermissions() {
+        // Request location permissions
+        ActivityCompat.requestPermissions(requireActivity(), new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+            // Check if the permission was granted
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permission granted, start location updates
+                //startLocationUpdates();
+            } else {
+                // Permission denied, handle accordingly (e.g., show a message to the user)
+                Toast.makeText(requireContext(), "Location permission denied", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    private void startLocationUpdates() {
+        LocationManager mLocationManager = (LocationManager) getActivity().getSystemService(LOCATION_SERVICE);
+        if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+
+            Toast.makeText(requireContext(), "start to try collecting geopoint", Toast.LENGTH_SHORT).show();
+
+            mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, LOCATION_REFRESH_TIME,
+                    /*LOCATION_REFRESH_DISTANCE*/ 0 , mLocationListener);
+        }
+    }
+
+    private void stopLocationUpdates() {
+        LocationManager mLocationManager = (LocationManager) getActivity().getSystemService(LOCATION_SERVICE);
+        if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+
+            Toast.makeText(requireContext(), "stop collecting geopoint", Toast.LENGTH_SHORT).show();
+            mLocationManager.removeUpdates(mLocationListener);
+        }
     }
 
     //Callback interface
@@ -180,7 +279,7 @@ public class RunFragment extends Fragment {
             //TODO: CREATE RUN
             startRunDateTime = LocalDateTime.now();
             createRun(userUuid, startRunDateTime);
-            Toast.makeText(requireContext(), "initialized run session", Toast.LENGTH_SHORT).show();
+            //Toast.makeText(requireContext(), "initialized run session", Toast.LENGTH_SHORT).show();
 
             //Sensor handling
             startResumeRun();
@@ -229,6 +328,11 @@ public class RunFragment extends Fragment {
                 public void onEvent(int eventType, Bundle params) {}
             });
 
+            //start to collect geoPoints
+            if (hasLocationPermissions()) {
+                startLocationUpdates();
+            }
+
         });
     }
 
@@ -257,12 +361,17 @@ public class RunFragment extends Fragment {
             // user stops run while it is running (it needs to create last segment)
             //TODO: CLOSE LAST RUN_SEGMENT
             if (pauseManagement) {
+                if (hasLocationPermissions()) {
+                    Toast.makeText(requireContext(), "stop collecting geopoint", Toast.LENGTH_SHORT).show();
+                    stopLocationUpdates();
+                }
                 LocalDateTime endRunSegmentDateTime = LocalDateTime.now();
-                createRunSegment(runId, startRunDateTime, endRunSegmentDateTime);
-                Toast.makeText(requireContext(), "ended session, uploading last segment", Toast.LENGTH_SHORT).show();
+                createRunSegment(runId, startRunDateTime, endRunSegmentDateTime, geoPoints);
+                //Toast.makeText(requireContext(), "ended session, uploading last segment", Toast.LENGTH_SHORT).show();
+
             } else {
                 //just to test
-                Toast.makeText(requireContext(), "ended session, no need to create last segment", Toast.LENGTH_SHORT).show();
+                //Toast.makeText(requireContext(), "ended session, no need to create last segment", Toast.LENGTH_SHORT).show();
             }
 
             //reset the data
@@ -288,9 +397,12 @@ public class RunFragment extends Fragment {
                 chronometer.stop();
 
                 //TODO: CLOSE RUN FRAGMENT
+                if (hasLocationPermissions()) {
+                    stopLocationUpdates();
+                }
                 LocalDateTime endRunSegmentDateTime = LocalDateTime.now();
-                createRunSegment(runId, startRunDateTime, endRunSegmentDateTime);
-                Toast.makeText(requireContext(), "close runSegment successfully, pause the app", Toast.LENGTH_SHORT).show();
+                createRunSegment(runId, startRunDateTime, endRunSegmentDateTime, geoPoints);
+                //Toast.makeText(requireContext(), "close runSegment successfully, pause the app", Toast.LENGTH_SHORT).show();
 
                 // Reset the fragment data
                 pauseRun();
@@ -307,8 +419,11 @@ public class RunFragment extends Fragment {
                 chronometer.start();
 
                 //TODO: CREATE RUN FRAGMENT -> the runSegment will be created on pause, on resume we will define only the new beginning time
+                if (hasLocationPermissions()) {
+                    startLocationUpdates();
+                }
                 startRunDateTime = LocalDateTime.now();
-                Toast.makeText(requireContext(), "updated new segment starTime, resuming the app", Toast.LENGTH_SHORT).show();
+                //Toast.makeText(requireContext(), "updated new segment starTime, resuming the app", Toast.LENGTH_SHORT).show();
 
                 startResumeRun();
             }
@@ -426,6 +541,7 @@ public class RunFragment extends Fragment {
         }
     }
 
+
     @Override
     public void onDestroyView() {
         if (textToSpeech != null) {
@@ -465,7 +581,7 @@ public class RunFragment extends Fragment {
                 });
     }
 
-    public void createRunSegment(String runId, LocalDateTime startDateTime, LocalDateTime endDateTime) {
+    public void createRunSegment(String runId, LocalDateTime startDateTime, LocalDateTime endDateTime, ArrayList<GeoPoint> geoPoints) {
         // Create a new document with a generated ID
         Map<String, Object> data = new HashMap<>();
         data.put("runId", runId);
@@ -475,6 +591,17 @@ public class RunFragment extends Fragment {
         data.put("averagePace", averagePace_value);
         data.put("startDateTime", FirestoreHelper.getFirebaseTimestampFromLocalDateTime(startDateTime));
         data.put("endDateTime", FirestoreHelper.getFirebaseTimestampFromLocalDateTime(endDateTime));
+
+        List<Map<String, Double>> geoPointsMaps = new ArrayList<>();
+        for (GeoPoint geoPoint : geoPoints) {
+            Map<String, Double> geoPointMap = new HashMap<>();
+            geoPointMap.put("latitude", geoPoint.getLatitude());
+            geoPointMap.put("longitude", geoPoint.getLongitude());
+            geoPointsMaps.add(geoPointMap);
+        }
+
+        data.put("geoPoints", geoPointsMaps);
+
 
 
         FirestoreHelper.getDb().collection("runSegments")
