@@ -47,11 +47,15 @@ dependencies {
     implementation("com.google.firebase:firebase-firestore:24.9.1")
     implementation("com.google.firebase:firebase-inappmessaging:20.4.0")
 
+    implementation("org.osmdroid:osmdroid-android:6.1.14")
+    implementation ("com.github.AnyChart:AnyChart-Android:1.1.5")
+    implementation ("com.github.AnyChart:AnyChart-Android:1.1.5")
+
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
     implementation(platform("org.jetbrains.kotlin:kotlin-bom:1.8.0"))
 
-    implementation("org.osmdroid:osmdroid-android:6.1.14")
-    //implementation("com.github.MKergall:osmbonuspack:6.9.0")
+
+
 }
