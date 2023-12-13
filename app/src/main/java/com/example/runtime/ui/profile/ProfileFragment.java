@@ -1,14 +1,17 @@
 package com.example.runtime.ui.profile;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.EditText;
-import android.widget.LinearLayout;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -16,22 +19,14 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.example.runtime.LoginActivity;
-import com.example.runtime.MainActivity;
 import com.example.runtime.R;
 import com.example.runtime.databinding.FragmentProfileBinding;
 import com.example.runtime.firestore.FirestoreHelper;
-import com.example.runtime.firestore.models.Run;
 import com.example.runtime.firestore.models.User;
 import com.example.runtime.sharedPrefs.SharedPreferencesHelper;
-import com.example.runtime.ui.profile.ProfileViewModel;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.firestore.Query;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 
-import java.util.Collections;
-import java.util.List;
 
 public class ProfileFragment extends Fragment {
 
@@ -46,6 +41,8 @@ public class ProfileFragment extends Fragment {
     private TextView weightEditText;
 
     private static final String TAG = "ProfileFragment";
+
+    Switch reminderSwitch;
 
 
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -62,6 +59,26 @@ public class ProfileFragment extends Fragment {
         usernameEditText = root.findViewById(R.id.textView10);
         weightEditText = root.findViewById(R.id.textView16);
         heightEditText = root.findViewById(R.id.textView11);
+
+        reminderSwitch = root.findViewById(R.id.reminder_notifications);
+
+        // I used the SharedPreferences to save the choice of the user to have the notifications activate or not
+        SharedPreferences sharedPref = getActivity().getPreferences(Context.MODE_PRIVATE);
+        boolean isSwitchOn = sharedPref.getBoolean("EncouragementSwitchState", false);
+        reminderSwitch.setChecked(isSwitchOn);
+
+        reminderSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            // Salva lo stato dello switch nelle SharedPreferences
+            SharedPreferences.Editor editor = sharedPref.edit();
+            editor.putBoolean("EncouragementSwitchState", isChecked);
+            editor.apply();
+
+            if (isChecked) {
+                scheduleReminderNotifications();
+            } else {
+                cancelReminderNotifications();
+            }
+        });
 
         String uuid = SharedPreferencesHelper.getFieldStringFromSP(requireContext(), "uuid");
         if (!uuid.isEmpty()) {
@@ -103,6 +120,25 @@ public class ProfileFragment extends Fragment {
 
         });
 
+    }
+
+    // Method used to schedule notifications
+    private void scheduleReminderNotifications() {
+        AlarmManager alarmManager = (AlarmManager) requireActivity().getSystemService(Context.ALARM_SERVICE);
+        Intent intent = new Intent(getContext(), AlarmReceiver.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(getContext(), 0, intent, PendingIntent.FLAG_IMMUTABLE);
+
+        // Reminder interval set to 3 days
+        long interval = 3 * 24 * 60 * 60 * 1000;
+        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), interval, pendingIntent);
+    }
+
+    // Method used to cancel notifications
+    private void cancelReminderNotifications() {
+        AlarmManager alarmManager = (AlarmManager) requireActivity().getSystemService(Context.ALARM_SERVICE);
+        Intent intent = new Intent(getContext(), AlarmReceiver.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(getContext(), 0, intent, PendingIntent.FLAG_IMMUTABLE);
+        alarmManager.cancel(pendingIntent);
     }
 
     @Override

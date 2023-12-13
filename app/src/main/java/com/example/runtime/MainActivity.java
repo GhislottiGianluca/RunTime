@@ -1,5 +1,7 @@
 package com.example.runtime;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.os.Bundle;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -36,6 +38,14 @@ public class MainActivity extends AppCompatActivity {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_activity_main);
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(binding.navView, navController);
+
+        //Creation of the notification channel
+        CharSequence name = "reminder_channel";
+        String description = "Running Reminder";
+        NotificationChannel channel = new NotificationChannel("reminder_channel", name, NotificationManager.IMPORTANCE_HIGH);
+        channel.setDescription(description);
+        NotificationManager notificationManager = getSystemService(NotificationManager.class);
+        notificationManager.createNotificationChannel(channel);
 
     }
 
