@@ -6,7 +6,6 @@ import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.drawable.Drawable;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -16,6 +15,8 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
@@ -31,7 +32,6 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -42,15 +42,13 @@ import com.example.runtime.sharedPrefs.SharedPreferencesHelper;
 
 import org.osmdroid.util.GeoPoint;
 
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.time.LocalDateTime;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.UUID;
 
 public class RunFragment extends Fragment {
@@ -61,11 +59,12 @@ public class RunFragment extends Fragment {
     private ImageButton pause;
     private ImageButton stop;
 
+    //Variable used to track the behavior of the buttons
     private boolean pauseManagement = true;
 
     //Users data, these data will come from the user's model
-    private float height_cm = 170.0f;
-    private float weight_kg = 65.5f;
+    private float height_cm;
+    private float weight_kg;
     private final float stride_km = (float) (height_cm * 0.65) / 1_000_000;
 
     //Run data
@@ -100,9 +99,12 @@ public class RunFragment extends Fragment {
     //Variables used to speech every km
     TextToSpeech textToSpeech;
 
-    //Variable used for the speech
+    //Variables used for the speech
     private SpeechRecognizer speechRecognizer;
     private Intent intentRecognizer;
+
+    //Variable used for the vibration
+    private Vibrator vibrator;
 
 
     //Variable used to track every integer number of km reached by the user
@@ -138,6 +140,10 @@ public class RunFragment extends Fragment {
         binding = FragmentRunBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
+        //TODO, user data initialisation
+        height_cm = 170.0f;
+        weight_kg = 65.5f;
+
         String userUuid = SharedPreferencesHelper.getFieldStringFromSP(requireContext(), "uuid");
 
         //todo in a second moment
@@ -146,14 +152,14 @@ public class RunFragment extends Fragment {
         }*/
 
         //Button settings
-        play = (ImageButton) root.findViewById(R.id.play);
-        pause = (ImageButton) root.findViewById(R.id.pause);
-        stop = (ImageButton) root.findViewById(R.id.stop);
+        play = root.findViewById(R.id.play);
+        pause = root.findViewById(R.id.pause);
+        stop = root.findViewById(R.id.stop);
 
         //Data textView
-        averagePace = (TextView) root.findViewById(R.id.tv1);
-        actualPace = (TextView) root.findViewById(R.id.tv3);
-        calories = (TextView) root.findViewById(R.id.tv2);
+        averagePace = root.findViewById(R.id.tv1);
+        actualPace = root.findViewById(R.id.tv3);
+        calories = root.findViewById(R.id.tv2);
         km = root.findViewById(R.id.tvp);
 
         //Sensor variable initialization
@@ -181,12 +187,13 @@ public class RunFragment extends Fragment {
         intentRecognizer.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this.getContext());
 
+        //Vibration variable initialisation
+        vibrator = (Vibrator) getActivity().getSystemService(Context.VIBRATOR_SERVICE);
+
         // Check and request location permissions
         if (!hasLocationPermissions()) {
             requestLocationPermissions();
         }
-
-
 
         setButtonListener(userUuid);
 
@@ -260,7 +267,6 @@ public class RunFragment extends Fragment {
         playButton(userUuid);
         pauseButton(userUuid);
         stopButton(userUuid);
-
     }
 
     private void playButton(String userUuid) {
@@ -534,7 +540,11 @@ public class RunFragment extends Fragment {
 
         //Notifies the user when each kilometer is reached
         if ((int) km_value > lastIntKmValue) {
-            Log.d("Tag", "Ciao");
+
+            if (vibrator != null && vibrator.hasVibrator()) {
+                vibrator.vibrate(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE));
+            }
+
             textToSpeech.speak("" + (int) km_value + "kilometers, average pace:" + averagePaceMinPart + " minutes," + averagePaceSecPart + "seconds per kilometer.",
                     TextToSpeech.QUEUE_FLUSH, null, null);
             lastIntKmValue = (int) km_value;
@@ -553,7 +563,7 @@ public class RunFragment extends Fragment {
         binding = null;
     }
 
-    ////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////
