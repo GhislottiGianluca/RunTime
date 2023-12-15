@@ -65,7 +65,7 @@ public class RunFragment extends Fragment {
     //Users data, these data will come from the user's model
     private float height_cm;
     private float weight_kg;
-    private final float stride_km = (float) (height_cm * 0.65) / 1_000_000;
+    private float stride_km;
 
     //Run data
     private float km_value = 0;
@@ -143,6 +143,7 @@ public class RunFragment extends Fragment {
         //TODO, user data initialisation
         height_cm = 170.0f;
         weight_kg = 65.5f;
+        stride_km = (float) (height_cm * 0.65) / 1_000_000;
 
         String userUuid = SharedPreferencesHelper.getFieldStringFromSP(requireContext(), "uuid");
 
@@ -519,8 +520,6 @@ public class RunFragment extends Fragment {
             int actualPaceSecPart = (int) ((actualPace_valued - actualPaceMinPart) * 60);
             String actualPaceFormatted = actualPaceMinPart + "'" + actualPaceSecPart + "''";
             actualPace.setText(actualPaceFormatted);
-        } else {
-            actualPace.setText("N/A");
         }
 
         //Average Pace
@@ -533,8 +532,6 @@ public class RunFragment extends Fragment {
             averagePaceSecPart = (int) ((averagePace_value - averagePaceMinPart) * 60);
             averagePaceFormatted = averagePaceMinPart + "'" + averagePaceSecPart + "''";
             averagePace.setText(averagePaceFormatted);
-        } else {
-            averagePace.setText("N/A");
         }
 
 

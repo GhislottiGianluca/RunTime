@@ -79,9 +79,9 @@ public class ActivityFragment extends Fragment {
             navigateToDetailScreen(item.getRunId());
         });
 
-        int cardBackgroundColor = getResources().getColor(R.color.activityCardBackground);
-        cardView.setCardBackgroundColor(cardBackgroundColor);
-        cardView.setRadius(25);
+        //int cardBackgroundColor = getResources().getColor(R.color.activityCardBackground);
+        //cardView.setCardBackgroundColor(cardBackgroundColor);
+        //cardView.setRadius(25);
 
         //cardView.setPadding(0, 20, 0, 20);
         // Add the card to the container
