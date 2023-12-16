@@ -39,6 +39,10 @@ import com.example.runtime.R;
 import com.example.runtime.databinding.FragmentRunBinding;
 import com.example.runtime.firestore.FirestoreHelper;
 import com.example.runtime.sharedPrefs.SharedPreferencesHelper;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 
 import org.osmdroid.util.GeoPoint;
 
@@ -73,6 +77,11 @@ public class RunFragment extends Fragment {
     private double actualPace_value;
     private double averagePace_value;
     private String averagePaceFormatted;
+
+    //total run data
+    private float totKm;
+    private float totCalories;
+    private int totSteps;
 
     //Run segment data
     private float km_local_value;
@@ -121,6 +130,8 @@ public class RunFragment extends Fragment {
     private int LOCATION_REFRESH_TIME = 5000; // ms
     private int LOCATION_REFRESH_DISTANCE = 10; // meters
 
+    private LocationManager mLocationManager;
+
     private final LocationListener mLocationListener = new LocationListener() {
         @Override
         public void onLocationChanged(final Location location) {
@@ -131,6 +142,7 @@ public class RunFragment extends Fragment {
 
         }
     };
+
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -236,25 +248,38 @@ public class RunFragment extends Fragment {
     }
 
     private void startLocationUpdates() {
-        LocationManager mLocationManager = (LocationManager) getActivity().getSystemService(LOCATION_SERVICE);
+        mLocationManager = (LocationManager) getActivity().getSystemService(LOCATION_SERVICE);
+
         if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
                 && ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
 
             Toast.makeText(requireContext(), "start to try collecting geopoint", Toast.LENGTH_SHORT).show();
 
             mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, LOCATION_REFRESH_TIME,
-                    /*LOCATION_REFRESH_DISTANCE*/ 0 , mLocationListener);
+                    /*LOCATION_REFRESH_DISTANCE*/ 0, mLocationListener);
+        } else { //check if the case
+            requestLocationPermissions();
         }
     }
 
     private void stopLocationUpdates() {
-        LocationManager mLocationManager = (LocationManager) getActivity().getSystemService(LOCATION_SERVICE);
+        /*LocationManager mLocationManager = (LocationManager) getActivity().getSystemService(LOCATION_SERVICE);
         if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
                 && ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
 
             Toast.makeText(requireContext(), "stop collecting geopoint", Toast.LENGTH_SHORT).show();
             mLocationManager.removeUpdates(mLocationListener);
         }
+
+         */
+
+        Toast.makeText(requireContext(), "stop collecting geopoint", Toast.LENGTH_SHORT).show();
+        mLocationManager.removeUpdates(mLocationListener);
+
+        /*if(mLocationManager != null) {
+            Toast.makeText(requireContext(), "stop collecting geopoint", Toast.LENGTH_SHORT).show();
+            mLocationManager.removeUpdates(mLocationListener);
+        }*/
     }
 
     //Callback interface
@@ -295,17 +320,29 @@ public class RunFragment extends Fragment {
             speechRecognizer.setRecognitionListener(new RecognitionListener() {
                 //All those methods are the default method override from the RecognitionListener()
                 @Override
-                public void onReadyForSpeech(Bundle params) {}
+                public void onReadyForSpeech(Bundle params) {
+                }
+
                 @Override
-                public void onBeginningOfSpeech() {}
+                public void onBeginningOfSpeech() {
+                }
+
                 @Override
-                public void onRmsChanged(float rmsdB) {}
+                public void onRmsChanged(float rmsdB) {
+                }
+
                 @Override
-                public void onBufferReceived(byte[] buffer) {}
+                public void onBufferReceived(byte[] buffer) {
+                }
+
                 @Override
-                public void onEndOfSpeech() {}
+                public void onEndOfSpeech() {
+                }
+
                 @Override
-                public void onError(int error) {}
+                public void onError(int error) {
+                }
+
                 @Override
                 public void onResults(Bundle results) {
                     ArrayList<String> matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
@@ -330,14 +367,19 @@ public class RunFragment extends Fragment {
                 }
 
                 @Override
-                public void onPartialResults(Bundle partialResults) {}
+                public void onPartialResults(Bundle partialResults) {
+                }
+
                 @Override
-                public void onEvent(int eventType, Bundle params) {}
+                public void onEvent(int eventType, Bundle params) {
+                }
             });
 
             //start to collect geoPoints
             if (hasLocationPermissions()) {
                 startLocationUpdates();
+            } else {
+                requestLocationPermissions();
             }
 
         });
@@ -358,7 +400,7 @@ public class RunFragment extends Fragment {
 
             //Chronometer handling
             chronometer.stop();
-            chronometer.setBase(SystemClock.elapsedRealtime());
+
 
             pauseManagement = false;
 
@@ -368,24 +410,29 @@ public class RunFragment extends Fragment {
             // user stops run while it is running (it needs to create last segment)
             //TODO: CLOSE LAST RUN_SEGMENT
             if (pauseManagement) {
-                if (hasLocationPermissions()) {
-                    Toast.makeText(requireContext(), "stop collecting geopoint", Toast.LENGTH_SHORT).show();
-                    stopLocationUpdates();
-                }
+                /*if (hasLocationPermissions()) {
+                   Toast.makeText(requireContext(), "stop collecting geopoint", Toast.LENGTH_SHORT).show();
+                stopLocationUpdates();
+                }*/
                 LocalDateTime endRunSegmentDateTime = LocalDateTime.now();
                 createRunSegment(runId, startRunDateTime, endRunSegmentDateTime, geoPoints);
                 //Toast.makeText(requireContext(), "ended session, uploading last segment", Toast.LENGTH_SHORT).show();
-
-            } else {
-                //just to test
-                //Toast.makeText(requireContext(), "ended session, no need to create last segment", Toast.LENGTH_SHORT).show();
             }
+
+            Toast.makeText(requireContext(), "stop collecting geopoint", Toast.LENGTH_SHORT).show();
+            stopLocationUpdates();
+
+            //add to firebase run the summaries of the activity
+            updateRun(runId);
 
             //reset the data
             terminateRun();
 
             //Sensor handling
             stopPauseRun();
+
+            //reset chrono
+            chronometer.setBase(SystemClock.elapsedRealtime());
         });
     }
 
@@ -404,9 +451,11 @@ public class RunFragment extends Fragment {
                 chronometer.stop();
 
                 //TODO: CLOSE RUN FRAGMENT
-                if (hasLocationPermissions()) {
+                /*if (hasLocationPermissions()) {
                     stopLocationUpdates();
-                }
+                }*/
+                stopLocationUpdates();
+
                 LocalDateTime endRunSegmentDateTime = LocalDateTime.now();
                 createRunSegment(runId, startRunDateTime, endRunSegmentDateTime, geoPoints);
                 //Toast.makeText(requireContext(), "close runSegment successfully, pause the app", Toast.LENGTH_SHORT).show();
@@ -426,9 +475,11 @@ public class RunFragment extends Fragment {
                 chronometer.start();
 
                 //TODO: CREATE RUN FRAGMENT -> the runSegment will be created on pause, on resume we will define only the new beginning time
-                if (hasLocationPermissions()) {
+                /*if (hasLocationPermissions()) {
                     startLocationUpdates();
-                }
+                }*/
+                startLocationUpdates();
+
                 startRunDateTime = LocalDateTime.now();
                 //Toast.makeText(requireContext(), "updated new segment starTime, resuming the app", Toast.LENGTH_SHORT).show();
 
@@ -459,7 +510,7 @@ public class RunFragment extends Fragment {
     }
 
     //Method used to reset the field of the single fragment session
-    public void pauseRun(){
+    public void pauseRun() {
 
         km_local_value = 0;
         calories_local_value = 0;
@@ -588,7 +639,63 @@ public class RunFragment extends Fragment {
                 });
     }
 
+    public void updateRun(String runId) {
+        if (runId == null) {
+            Log.e("Firestore Update", "Invalid runId");
+            return;
+        }
+
+        long elapsedMillis = SystemClock.elapsedRealtime() - chronometer.getBase();
+
+        Map<String, Object> data = new HashMap<>();
+
+        data.put("totalSteps", totSteps);
+        data.put("totalCalories", totCalories);
+        data.put("totalKm", totKm);
+        data.put("totalTimeMs", elapsedMillis);
+
+
+        // Create a query to find the document with the specified runId property
+        Query query = FirestoreHelper.getDb().collection("runs").whereEqualTo("runId", runId);
+
+        // Execute the query
+        query.get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        QuerySnapshot querySnapshot = task.getResult();
+                        if (querySnapshot != null && !querySnapshot.isEmpty()) {
+                            // Update the first document found with the specified runId
+                            QueryDocumentSnapshot documentSnapshot = (QueryDocumentSnapshot) querySnapshot.getDocuments().get(0);
+                            DocumentReference runRef = documentSnapshot.getReference();
+                            Log.e("snapshot id", runRef.toString());
+
+                            // Update the document with the new data
+                            runRef.update(data)
+                                    .addOnSuccessListener(aVoid -> {
+                                        // Update successful
+                                        Log.d("Firestore Update", "Document updated successfully!");
+                                    })
+                                    .addOnFailureListener(e -> {
+                                        // Handle the failure
+                                        Log.e("Firestore Update", "Error updating document: " + e.getMessage());
+                                    });
+                        } else {
+                            // Handle the case where no document with the specified runId is found
+                            Log.e("Firestore Update", "No document found with runId: " + runId);
+                        }
+                    } else {
+                        // Handle the failure to execute the query
+                        Log.e("Firestore Update", "Error executing query: " + task.getException().getMessage());
+                    }
+                });
+
+    }
+
     public void createRunSegment(String runId, LocalDateTime startDateTime, LocalDateTime endDateTime, ArrayList<GeoPoint> geoPoints) {
+
+        //update total values
+        updateTotValues();
+
         // Create a new document with a generated ID
         Map<String, Object> data = new HashMap<>();
         data.put("runId", runId);
@@ -610,7 +717,6 @@ public class RunFragment extends Fragment {
         data.put("geoPoints", geoPointsMaps);
 
 
-
         FirestoreHelper.getDb().collection("runSegments")
                 .add(data)
                 .addOnSuccessListener(documentReference -> {
@@ -623,6 +729,12 @@ public class RunFragment extends Fragment {
                     //Log.w(TAG, "Error adding document", e);
                     Log.w("failed runSegments creation", "Error adding document", e);
                 });
+    }
+
+    private void updateTotValues() {
+        totSteps += localList.size();
+        totCalories += calories_local_value;
+        totKm += km_local_value;
     }
 
 

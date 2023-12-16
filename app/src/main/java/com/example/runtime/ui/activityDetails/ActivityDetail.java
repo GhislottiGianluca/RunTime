@@ -4,11 +4,13 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
+import androidx.constraintlayout.widget.ConstraintLayout;
 
 import com.anychart.AnyChart;
 import com.anychart.AnyChartView;
@@ -34,6 +36,7 @@ import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.Polyline;
 
+import java.text.DecimalFormat;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -50,6 +53,15 @@ public class ActivityDetail extends AppCompatActivity {
 
     private AnyChartView anyChartView;
 
+    private ConstraintLayout runInfo;
+    private TextView stepsText;
+    private TextView caloriesText;
+    private TextView kmText;
+    private TextView paceText;
+
+    private Button prevChartButton;
+    private Button nextChartButton;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,15 +74,21 @@ public class ActivityDetail extends AppCompatActivity {
         //TextView textView = findViewById(R.id.detailTitle);
 
         List<RunSegment> runSegments = new ArrayList<>();
-        LinearLayout infoContainer = findViewById(R.id.infoContainer);
 
         // Set the user agent for osmdroid
         Configuration.getInstance().setUserAgentValue(BuildConfig.APPLICATION_ID);
 
+        stepsText = findViewById(R.id.textSteps);
+        kmText = findViewById(R.id.textKm);
+        paceText = findViewById(R.id.paceText);
+        caloriesText = findViewById(R.id.textCalories);
+
+        prevChartButton = findViewById(R.id.prevChart);
+        nextChartButton = findViewById(R.id.nextChart);
 
         //testBackend
-        getItemsFromBackend(runId, runSegments, infoContainer);
-        updateUI(runSegments, infoContainer);
+        getItemsFromBackend(runId, runSegments);
+        updateUI(runSegments);
 
         //map settings
         mapView = findViewById(R.id.mapView);
@@ -82,9 +100,8 @@ public class ActivityDetail extends AppCompatActivity {
         anyChartView = findViewById(R.id.barChart);
     }
 
-    private void getItemsFromBackend(String runId, List<RunSegment> runSegments, LinearLayout infoContainer) {
+    private void getItemsFromBackend(String runId, List<RunSegment> runSegments) {
         CollectionReference runsCollection = FirestoreHelper.getDb().collection("runSegments");
-
         Query query = runsCollection.whereEqualTo("runId", runId);
 
         query.get()
@@ -96,7 +113,7 @@ public class ActivityDetail extends AppCompatActivity {
                     }
                     //runSegments.forEach(segment -> Log.d(segment.getRunId(), "at time " + FirestoreHelper.getLocalDateTimeFromFirebaseTimestampLocalDateTime(segment.getStartDateTime()) ));
 
-                    updateUI(runSegments, infoContainer);
+                    updateUI(runSegments);
 
                 })
                 .addOnFailureListener(e -> {
@@ -104,7 +121,7 @@ public class ActivityDetail extends AppCompatActivity {
                 });
     }
 
-    private void updateUI(List<RunSegment> runSegments, LinearLayout infoContainer) {
+    private void updateUI(List<RunSegment> runSegments) {
         if (runSegments.isEmpty()) {
             return;
         }
@@ -134,9 +151,10 @@ public class ActivityDetail extends AppCompatActivity {
         //init mapView if data are available
         initMapView(runSegments);
 
-        if(runSegments.size() > 1){
+        if (runSegments.size() > 1) {
             //init chart
             createColumnChart(runSegments);
+
         } else {
             anyChartView.setActivated(false);
         }
@@ -153,21 +171,27 @@ public class ActivityDetail extends AppCompatActivity {
             totalDurationString = String.format("%02d:%02d:%02d", totalDuration.toHours(), totalDuration.toMinutesPart(), totalDuration.toSecondsPart());
         }*/
 
+        DecimalFormat df = new DecimalFormat("#.###");
+
         int totalSteps = runSegments.stream().mapToInt(RunSegment::getSteps).sum();
         //double totalDistanceKM = totalSteps * 0.8 / 1000;
         double totalDistanceKM = runSegments.stream().mapToDouble(item -> item.getKm()).sum();
         double calories = runSegments.stream().mapToDouble(item -> item.getCalories()).sum();
-
         double averagePace = runSegments.stream().mapToDouble(item -> item.getAveragePace()).sum() / runSegments.size();
-        Log.d("avgpace", String.valueOf(runSegments.get(0).getAveragePace()));
+
+        stepsText.setText(String.valueOf(totalSteps) + " steps");
+        caloriesText.setText(df.format(calories));
+        paceText.setText(df.format(averagePace));
+        kmText.setText(df.format(totalDistanceKM) + " km");
+
         //double averagePace = itemList.get(0).getAveragePace();
-        createInfoItem("startRun", FirestoreHelper.formatDateTimeWithSecondos(startRun), infoContainer);
+        /*createInfoItem("startRun", FirestoreHelper.formatDateTimeWithSecondos(startRun), infoContainer);
         createInfoItem("endRun", FirestoreHelper.formatDateTimeWithSecondos(endRun), infoContainer);
         //createInfoItem("totalDurationInMinutes", String.valueOf(totalDuration.toMinutes()), infoContainer);
 
         createInfoItem("Nr.steps", String.valueOf(totalSteps), infoContainer);
         createInfoItem("average_pace", String.valueOf(averagePace), infoContainer);
-        createInfoItem("totalDistanceKM", String.valueOf(totalDistanceKM), infoContainer);
+        createInfoItem("totalDistanceKM", String.valueOf(totalDistanceKM), infoContainer);*/
         //createInfoItem("calories", String.valueOf(calories), infoContainer);
 
         //createInfoItem("totalDurationInSeconds", String.valueOf(totalDuration.getSeconds()), infoContainer);
@@ -175,9 +199,9 @@ public class ActivityDetail extends AppCompatActivity {
 
     }
 
-    private void initMapView(List<RunSegment> runSegments){
+    private void initMapView(List<RunSegment> runSegments) {
         ArrayList<GeoPoint> totalpaths = new ArrayList<>();
-        for(RunSegment segment : runSegments){
+        for (RunSegment segment : runSegments) {
             totalpaths.addAll(segment.getGeoPoints());
         }
         if (totalpaths.size() > 0) {
@@ -196,13 +220,12 @@ public class ActivityDetail extends AppCompatActivity {
     }
 
 
-    public /*Cartesian*/void  createColumnChart(List<RunSegment> runSegments){
+    public /*Cartesian*/void createColumnChart(List<RunSegment> runSegments) {
         Map<Integer, Integer> graph_map = new TreeMap<>();
 
-        for(RunSegment segment : runSegments){
-            graph_map.put(runSegments.indexOf(segment) + 1, segment.getSteps() );
+        for (RunSegment segment : runSegments) {
+            graph_map.put(runSegments.indexOf(segment) + 1, segment.getSteps());
         }
-
 
 
         //***** Create column chart using AnyChart library *********/
@@ -212,7 +235,7 @@ public class ActivityDetail extends AppCompatActivity {
         //  Create data entries for x and y axis of the graph
         List<DataEntry> data = new ArrayList<>();
 
-        for (Map.Entry<Integer,Integer> entry : graph_map.entrySet())
+        for (Map.Entry<Integer, Integer> entry : graph_map.entrySet())
             data.add(new ValueDataEntry(entry.getKey(), entry.getValue()));
 
         //  Add the data to column chart and get the columns
