@@ -222,7 +222,7 @@ public class ActivityDetail extends AppCompatActivity {
                 df.format(averagePace) + " min/Km",
                 df.format(totalDistanceKM) + " km",
                 timeFormatted + " min");
-        
+
     }
 
     private void initMapView(List<RunSegment> runSegments) {
