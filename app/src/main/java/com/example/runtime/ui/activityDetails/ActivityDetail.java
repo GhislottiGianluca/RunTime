@@ -6,11 +6,11 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.cardview.widget.CardView;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
 import com.anychart.AnyChart;
@@ -38,12 +38,10 @@ import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.Polyline;
 
 import java.text.DecimalFormat;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -57,6 +55,8 @@ public class ActivityDetail extends AppCompatActivity {
     private AnyChartView anyChartView;
 
     private ConstraintLayout runInfo;
+
+    private ImageButton shareButton;
 
     private LinearLayout buttonContainer;
     private TextView stepsText;
@@ -102,8 +102,11 @@ public class ActivityDetail extends AppCompatActivity {
 
         buttonContainer = findViewById(R.id.buttonContainer);
 
+        //todo: enjoy the sharing
+        shareButton = findViewById(R.id.shareButton);
+
         //testBackend
-        getItemsFromBackend(runId, runSegments);
+        getRunSegmentsFromBackend(runId, runSegments);
 
         //map settings
         mapView = findViewById(R.id.mapView);
@@ -140,7 +143,7 @@ public class ActivityDetail extends AppCompatActivity {
 
     }
 
-    private void getItemsFromBackend(String runId, List<RunSegment> runSegments) {
+    private void getRunSegmentsFromBackend(String runId, List<RunSegment> runSegments) {
         CollectionReference runsCollection = FirestoreHelper.getDb().collection("runSegments");
         Query query = runsCollection.whereEqualTo("runId", runId);
 
@@ -174,8 +177,6 @@ public class ActivityDetail extends AppCompatActivity {
             createColumnChart(runSegments);
             anyChartView.setChart(cartesian);
             //updateChart(runSegments);
-        } else {
-            //anyChartView.setActivated(false);
         }
 
 
@@ -183,7 +184,6 @@ public class ActivityDetail extends AppCompatActivity {
 
         LocalDateTime startRun = FirestoreHelper.getLocalDateTimeFromFirebaseTimestamp(runSegments.get(0).getStartDateTime());
         LocalDateTime endRun = FirestoreHelper.getLocalDateTimeFromFirebaseTimestamp(runSegments.get(runSegments.size() - 1).getEndDateTime());
-
         long totalMinutes = ChronoUnit.MINUTES.between(endRun, startRun);
 
         Log.e("chr", String.valueOf(totalMinutes));
@@ -200,21 +200,6 @@ public class ActivityDetail extends AppCompatActivity {
         paceText.setText(df.format(averagePace) + " min/Km");
         kmText.setText(df.format(totalDistanceKM) + " km");
         durationText.setText(String.valueOf(totalMinutes) + " min");
-
-
-        //createInfoItem("totalDurationInMinutes", String.valueOf(totalDuration.toMinutes()), infoContainer);
-
-        //double averagePace = itemList.get(0).getAveragePace();
-        /*createInfoItem("startRun", FirestoreHelper.formatDateTimeWithSecondos(startRun), infoContainer);
-        createInfoItem("endRun", FirestoreHelper.formatDateTimeWithSecondos(endRun), infoContainer);
-
-        createInfoItem("Nr.steps", String.valueOf(totalSteps), infoContainer);
-        createInfoItem("average_pace", String.valueOf(averagePace), infoContainer);
-        createInfoItem("totalDistanceKM", String.valueOf(totalDistanceKM), infoContainer);*/
-        //createInfoItem("calories", String.valueOf(calories), infoContainer);
-
-        //createInfoItem("totalDurationInSeconds", String.valueOf(totalDuration.getSeconds()), infoContainer);
-
 
     }
 

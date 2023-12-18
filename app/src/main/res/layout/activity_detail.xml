@@ -11,16 +11,28 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
+        <ImageButton
+            android:id="@+id/shareButton"
+            android:layout_width="30dp"
+            android:layout_height="50dp"
+            android:src="@drawable/share_icon"
+            app:layout_constraintBottom_toTopOf="@+id/runInfo"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.913"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.533" />
+
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/runInfo"
             android:layout_width="368dp"
             android:layout_height="198dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.488"
+            app:layout_constraintHorizontal_bias="0.372"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.046">
+            app:layout_constraintVertical_bias="0.102">
 
 
             <LinearLayout
@@ -198,7 +210,6 @@
             </LinearLayout>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
-
 
         <LinearLayout
             android:layout_width="match_parent"
