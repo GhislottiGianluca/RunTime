@@ -13,15 +13,17 @@
 
         <ImageButton
             android:id="@+id/shareButton"
-            android:layout_width="30dp"
-            android:layout_height="50dp"
+            android:layout_width="49dp"
+            android:layout_height="39dp"
+            android:background="@android:color/transparent"
+            android:scaleType="fitCenter"
             android:src="@drawable/share_icon"
             app:layout_constraintBottom_toTopOf="@+id/runInfo"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.913"
+            app:layout_constraintHorizontal_bias="0.486"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.533" />
+            app:layout_constraintVertical_bias="0.634" />
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/runInfo"

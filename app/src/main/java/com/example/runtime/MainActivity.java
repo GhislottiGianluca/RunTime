@@ -1,14 +1,20 @@
 package com.example.runtime;
 
+import android.Manifest;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.util.Log;
+import android.widget.Toast;
 
 import com.example.runtime.sharedPrefs.SharedPreferencesHelper;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
@@ -22,10 +28,17 @@ public class MainActivity extends AppCompatActivity {
 
     private ActivityMainBinding binding;
 
+    private static final int REQUEST_WRITE_EXTERNAL_STORAGE = 46;
+
+    private static final int REQUEST_ACTIVITY_RECOGNITION_PERMISSION = 45;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         FirebaseApp.initializeApp(this);
+
+        getWriteExternalStorage();
+        getActivityPermission();
 
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
@@ -75,6 +88,46 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(MainActivity.this, UserMetricsActivity.class);
         startActivity(intent);
         finish();
+    }
+
+    private void getWriteExternalStorage() {
+        if (ActivityCompat.checkSelfPermission(MainActivity.this,
+                android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]
+                            {Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    REQUEST_WRITE_EXTERNAL_STORAGE);
+        }
+        else
+        {
+            Log.i("WRITE_EXTERNAL_STORAGE", "PERMISSION_GRANTED");
+        }
+    }
+
+    private void getActivityPermission() {
+        if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACTIVITY_RECOGNITION)
+                != PackageManager.PERMISSION_GRANTED)
+        {
+            ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.ACTIVITY_RECOGNITION},
+                    REQUEST_ACTIVITY_RECOGNITION_PERMISSION);
+        }
+        else
+        {
+            return;
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_ACTIVITY_RECOGNITION_PERMISSION) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                getActivityPermission();
+            }
+            else {
+                Toast.makeText(this, "step permission denied", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
 }

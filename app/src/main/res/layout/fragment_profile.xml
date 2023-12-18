@@ -9,7 +9,7 @@
         android:id="@+id/changePasswordText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="300dp"
+        android:layout_marginTop="48dp"
         android:fontFamily="sans-serif-black"
         android:text="@string/notifications"
         android:textSize="24sp"
@@ -17,7 +17,8 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.463"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/UserDataText"
@@ -36,7 +37,9 @@
         android:id="@+id/EditButton"
         android:layout_width="86dp"
         android:layout_height="50dp"
+        android:layout_marginTop="16dp"
         android:text="@string/edit"
+        app:layout_constraintBottom_toTopOf="@+id/changePasswordText"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.815"
         app:layout_constraintStart_toStartOf="parent"
@@ -46,10 +49,12 @@
         android:id="@+id/SaveButton"
         android:layout_width="86dp"
         android:layout_height="50dp"
-        android:text="@string/save"
+        android:layout_marginTop="16dp"
         android:visibility="gone"
+        android:text="@string/save"
+        app:layout_constraintBottom_toTopOf="@+id/changePasswordText"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.791"
+        app:layout_constraintHorizontal_bias="0.815"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/linearLayout3" />
 
@@ -57,9 +62,10 @@
         android:id="@+id/CancelButton"
         android:layout_width="98dp"
         android:layout_height="49dp"
-        android:layout_marginTop="15dp"
-        android:text="@string/cancel"
+        android:layout_marginTop="16dp"
         android:visibility="gone"
+        android:text="@string/cancel"
+        app:layout_constraintBottom_toTopOf="@+id/changePasswordText"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.223"
         app:layout_constraintStart_toStartOf="parent"
@@ -70,14 +76,16 @@
         android:layout_width="355dp"
         android:layout_height="53dp"
         android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
         android:layout_marginEnd="16dp"
-        android:layout_marginBottom="244dp"
+        android:layout_marginBottom="212dp"
         android:text="@string/receive_reminders"
         android:textSize="18sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.291"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/changePasswordText"
         tools:ignore="UseSwitchCompatOrMaterialXml" />
 
     <LinearLayout
@@ -87,9 +95,12 @@
         android:layout_marginTop="32dp"
         android:gravity="center"
         android:orientation="vertical"
+        app:layout_constraintBottom_toTopOf="@+id/changePasswordText"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.492"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/UserDataText">
+        app:layout_constraintTop_toBottomOf="@+id/UserDataText"
+        app:layout_constraintVertical_bias="0.051">
 
         <LinearLayout
             android:layout_width="match_parent"

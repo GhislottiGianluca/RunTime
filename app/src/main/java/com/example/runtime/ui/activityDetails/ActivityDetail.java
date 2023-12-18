@@ -1,6 +1,11 @@
 package com.example.runtime.ui.activityDetails;
 
+import android.content.Intent;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.pdf.PdfDocument;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -9,9 +14,11 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.content.FileProvider;
 
 import com.anychart.AnyChart;
 import com.anychart.AnyChartView;
@@ -37,6 +44,9 @@ import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.Polyline;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -56,6 +66,7 @@ public class ActivityDetail extends AppCompatActivity {
 
     private ConstraintLayout runInfo;
 
+    //Button used to handle the activity sharing
     private ImageButton shareButton;
 
     private LinearLayout buttonContainer;
@@ -104,6 +115,8 @@ public class ActivityDetail extends AppCompatActivity {
 
         //todo: enjoy the sharing
         shareButton = findViewById(R.id.shareButton);
+
+        shareButton.setOnClickListener(v -> sharePdf());
 
         //testBackend
         getRunSegmentsFromBackend(runId, runSegments);
@@ -195,11 +208,18 @@ public class ActivityDetail extends AppCompatActivity {
         double calories = runSegments.stream().mapToDouble(item -> item.getCalories()).sum();
         double averagePace = runSegments.stream().mapToDouble(item -> item.getAveragePace()).sum() / runSegments.size();
 
+        //DATA TO SHARE
         stepsText.setText(String.valueOf(totalSteps) + " steps");
         caloriesText.setText(df.format(calories) + " cal");
         paceText.setText(df.format(averagePace) + " min/Km");
         kmText.setText(df.format(totalDistanceKM) + " km");
         durationText.setText(String.valueOf(totalMinutes) + " min");
+
+        createPdf(String.valueOf(totalSteps) + "total steps",
+                df.format(calories) + " calories",
+                df.format(averagePace) + " min/Km",
+                df.format(totalDistanceKM) + " km",
+                String.valueOf(totalMinutes) + " min");
 
     }
 
@@ -322,5 +342,57 @@ public class ActivityDetail extends AppCompatActivity {
         property.setText(propertyText);
 
         layout.addView(infoLayout);
+    }
+
+    private void createPdf(String steps, String calories, String averagePace,
+                           String totalKm, String totMin) {
+        PdfDocument document = new PdfDocument();
+
+        PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(300, 600, 1).create();
+        PdfDocument.Page page = document.startPage(pageInfo);
+
+        Canvas canvas = page.getCanvas();
+        Paint paint = new Paint();
+        int x = 10, y = 25; // Iniziamo da 10, 25
+
+        canvas.drawText("Passi: " + steps, x, y, paint);
+        y += 15; // Aggiungi spazio tra le righe
+        canvas.drawText("Calorie: " + calories, x, y, paint);
+        y += 15;
+        canvas.drawText("Ritmo Medio: " + averagePace, x, y, paint);
+        y += 15;
+        canvas.drawText("Distanza Totale: " + totalKm, x, y, paint);
+        y += 15;
+        canvas.drawText("Durata Totale: " + totMin, x, y, paint);
+
+        document.finishPage(page);
+
+        // Scrive il documento in un file
+        String filePath = getExternalFilesDir(null).getAbsolutePath() + "/mypdf.pdf";
+        File file = new File(filePath);
+        try {
+            document.writeTo(new FileOutputStream(file));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // Chiudi il documento
+        document.close();
+    }
+
+    private void sharePdf() {
+        File file = new File(getExternalFilesDir(null), "mypdf.pdf");
+        if (!file.exists()) {
+            // Se il file non esiste, mostra un messaggio di errore o genera il PDF
+            Toast.makeText(this, "PDF not found.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Uri uri = FileProvider.getUriForFile(this, "com.example.runtime.provider", file);
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.setType("application/pdf");
+        intent.putExtra(Intent.EXTRA_STREAM, uri);
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        startActivity(Intent.createChooser(intent, "Condividi PDF tramite:"));
     }
 }

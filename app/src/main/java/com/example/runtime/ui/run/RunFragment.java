@@ -154,7 +154,6 @@ public class RunFragment extends Fragment {
         binding = FragmentRunBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
-        //TODO, user data initialisation
         String userUuid = SharedPreferencesHelper.getFieldStringFromSP(requireContext(), "uuid");
         String height = SharedPreferencesHelper.getFieldStringFromSP(requireContext(), "height");
         String weight = SharedPreferencesHelper.getFieldStringFromSP(requireContext(), "weight");
