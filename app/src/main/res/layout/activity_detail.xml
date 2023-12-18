@@ -126,22 +126,24 @@
 
             </LinearLayout>
 
+
             <LinearLayout
                 android:id="@+id/pace"
-                android:layout_width="60dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="80dp"
                 android:orientation="vertical"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="@+id/totCalories"
+                app:layout_constraintEnd_toStartOf="@+id/totSteps"
                 app:layout_constraintStart_toStartOf="@+id/totKm"
                 app:layout_constraintTop_toBottomOf="@+id/totSteps"
-                app:layout_constraintVertical_bias="0.589">
+                app:layout_constraintVertical_bias="0.343">
 
                 <!-- Text TextView -->
 
                 <ImageView
                     android:layout_width="match_parent"
-                    android:layout_height="34dp"
+                    android:layout_height="38dp"
                     android:layout_marginTop="8dp"
                     android:src="@drawable/pace_icon"
                     app:layout_constraintEnd_toEndOf="parent"
@@ -149,6 +151,41 @@
 
                 <TextView
                     android:id="@+id/paceText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center"
+                    android:text="N/A"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/iconImageView" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/duration"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/totCalories"
+                app:layout_constraintHorizontal_bias="0.53"
+                app:layout_constraintStart_toEndOf="@+id/totSteps"
+                app:layout_constraintTop_toBottomOf="@+id/totSteps"
+                app:layout_constraintVertical_bias="0.343">
+
+                <!-- Text TextView -->
+
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="38dp"
+                    android:layout_marginTop="8dp"
+                    android:src="@drawable/time_icon"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <TextView
+                    android:id="@+id/durationText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
@@ -174,10 +211,12 @@
             android:orientation="vertical">
 
             <LinearLayout
+                android:id="@+id/buttonContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:gravity="center">
+                android:gravity="center"
+                >
 
                 <Button
                     android:id="@+id/prevChart"
@@ -198,8 +237,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="250dp"
                 android:layout_marginTop="40dp"
-
-                app:layout_constraintVertical_bias="0.0" />
+                app:layout_constraintVertical_bias="0.0"
+                />
         </LinearLayout>
 
 

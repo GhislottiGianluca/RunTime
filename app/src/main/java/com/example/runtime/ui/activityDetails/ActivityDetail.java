@@ -4,6 +4,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -39,7 +40,9 @@ import org.osmdroid.views.overlay.Polyline;
 import java.text.DecimalFormat;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -54,14 +57,24 @@ public class ActivityDetail extends AppCompatActivity {
     private AnyChartView anyChartView;
 
     private ConstraintLayout runInfo;
+
+    private LinearLayout buttonContainer;
     private TextView stepsText;
     private TextView caloriesText;
     private TextView kmText;
     private TextView paceText;
 
+    private TextView durationText;
+
     private Button prevChartButton;
     private Button nextChartButton;
 
+    private final ArrayList<String> chartType = new ArrayList<>(Arrays.asList("Steps", "Kms", "Calories"));
+    private int indexList = 1;
+
+    private Cartesian cartesian;
+
+    private Column column;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,13 +95,15 @@ public class ActivityDetail extends AppCompatActivity {
         kmText = findViewById(R.id.textKm);
         paceText = findViewById(R.id.paceText);
         caloriesText = findViewById(R.id.textCalories);
+        durationText = findViewById(R.id.durationText);
 
         prevChartButton = findViewById(R.id.prevChart);
         nextChartButton = findViewById(R.id.nextChart);
 
+        buttonContainer = findViewById(R.id.buttonContainer);
+
         //testBackend
         getItemsFromBackend(runId, runSegments);
-        updateUI(runSegments);
 
         //map settings
         mapView = findViewById(R.id.mapView);
@@ -97,7 +112,32 @@ public class ActivityDetail extends AppCompatActivity {
         mapView.setMultiTouchControls(true);
 
         //chart settings
-        anyChartView = findViewById(R.id.barChart);
+        initChartView();
+
+        nextChartButton.setOnClickListener(e -> {
+            if (indexList == 2) {
+                indexList = 0;
+            } else {
+                indexList++;
+            }
+
+            if (runSegments.size() > 1) {
+                updateChart(runSegments);
+            }
+        });
+
+        prevChartButton.setOnClickListener(e -> {
+            if (indexList == 0) {
+                indexList = 2;
+            } else {
+                indexList--;
+            }
+
+            if (runSegments.size() > 1) {
+                updateChart(runSegments);
+            }
+        });
+
     }
 
     private void getItemsFromBackend(String runId, List<RunSegment> runSegments) {
@@ -126,37 +166,16 @@ public class ActivityDetail extends AppCompatActivity {
             return;
         }
 
-        //todo: handling the geopoint and the mapview
-        //runSegments.sort(Comparator.comparing(RunSegment::getStartDateTime));
-
-        /*runSegments.get(0).getGeoPoints().forEach(item -> Log.e("geopoint", item.getLatitude() + " " + item.getLongitude()));
-        ArrayList<GeoPoint> totalpaths = new ArrayList<>();
-        for(RunSegment segment : runSegments){
-            totalpaths.addAll(segment.getGeoPoints());
-        }
-        if (totalpaths.size() > 0) {
-            // Set the map center to the first GeoPoint in the list
-            IMapController mapController = mapView.getController();
-            mapController.setZoom(14.0); // adjust the zoom level as needed
-            mapController.setCenter(totalpaths.get(0));
-
-            // Add a Polyline to connect the GeoPoints
-            Polyline line = new Polyline();
-            line.setPoints(totalpaths);
-            line.setColor(Color.RED);
-            mapView.setTileSource(TileSourceFactory.DEFAULT_TILE_SOURCE);
-            mapView.getOverlayManager().add(line);
-        }*/
-
         //init mapView if data are available
         initMapView(runSegments);
 
         if (runSegments.size() > 1) {
             //init chart
             createColumnChart(runSegments);
-
+            anyChartView.setChart(cartesian);
+            //updateChart(runSegments);
         } else {
-            anyChartView.setActivated(false);
+            //anyChartView.setActivated(false);
         }
 
 
@@ -165,29 +184,29 @@ public class ActivityDetail extends AppCompatActivity {
         LocalDateTime startRun = FirestoreHelper.getLocalDateTimeFromFirebaseTimestamp(runSegments.get(0).getStartDateTime());
         LocalDateTime endRun = FirestoreHelper.getLocalDateTimeFromFirebaseTimestamp(runSegments.get(runSegments.size() - 1).getEndDateTime());
 
-        Duration totalDuration = Duration.between(startRun, endRun);
-        String totalDurationString = null;
-        /*if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-            totalDurationString = String.format("%02d:%02d:%02d", totalDuration.toHours(), totalDuration.toMinutesPart(), totalDuration.toSecondsPart());
-        }*/
+        long totalMinutes = ChronoUnit.MINUTES.between(endRun, startRun);
 
-        DecimalFormat df = new DecimalFormat("#.###");
+        Log.e("chr", String.valueOf(totalMinutes));
+
+        DecimalFormat df = new DecimalFormat("#.##");
 
         int totalSteps = runSegments.stream().mapToInt(RunSegment::getSteps).sum();
-        //double totalDistanceKM = totalSteps * 0.8 / 1000;
         double totalDistanceKM = runSegments.stream().mapToDouble(item -> item.getKm()).sum();
         double calories = runSegments.stream().mapToDouble(item -> item.getCalories()).sum();
         double averagePace = runSegments.stream().mapToDouble(item -> item.getAveragePace()).sum() / runSegments.size();
 
         stepsText.setText(String.valueOf(totalSteps) + " steps");
-        caloriesText.setText(df.format(calories));
-        paceText.setText(df.format(averagePace));
+        caloriesText.setText(df.format(calories) + " cal");
+        paceText.setText(df.format(averagePace) + " min/Km");
         kmText.setText(df.format(totalDistanceKM) + " km");
+        durationText.setText(String.valueOf(totalMinutes) + " min");
+
+
+        //createInfoItem("totalDurationInMinutes", String.valueOf(totalDuration.toMinutes()), infoContainer);
 
         //double averagePace = itemList.get(0).getAveragePace();
         /*createInfoItem("startRun", FirestoreHelper.formatDateTimeWithSecondos(startRun), infoContainer);
         createInfoItem("endRun", FirestoreHelper.formatDateTimeWithSecondos(endRun), infoContainer);
-        //createInfoItem("totalDurationInMinutes", String.valueOf(totalDuration.toMinutes()), infoContainer);
 
         createInfoItem("Nr.steps", String.valueOf(totalSteps), infoContainer);
         createInfoItem("average_pace", String.valueOf(averagePace), infoContainer);
@@ -219,63 +238,93 @@ public class ActivityDetail extends AppCompatActivity {
         }
     }
 
-
-    public /*Cartesian*/void createColumnChart(List<RunSegment> runSegments) {
-        Map<Integer, Integer> graph_map = new TreeMap<>();
+    private /*Cartesian */ void createColumnChart(List<RunSegment> runSegments) {
+        Map<Integer, Number> graph_map = new TreeMap<>();
 
         for (RunSegment segment : runSegments) {
-            graph_map.put(runSegments.indexOf(segment) + 1, segment.getSteps());
+            if(indexList == 0){
+                Log.e("called with", "zero" + String.valueOf(segment.getSteps()));
+                graph_map.put(runSegments.indexOf(segment) + 1, segment.getSteps());
+            } else if (indexList == 1){
+                Log.e("called with", "uno" + String.valueOf(segment.getKm()));
+                graph_map.put(runSegments.indexOf(segment) + 1, segment.getKm());
+            } else {
+                Log.e("called with", "due" + String.valueOf(segment.getCalories()));
+                graph_map.put(runSegments.indexOf(segment) + 1, segment.getCalories());
+            }
         }
 
-
-        //***** Create column chart using AnyChart library *********/
-        // Create and get the cartesian coordinate system for column chart
-        Cartesian cartesian = AnyChart.column();
-
-        //  Create data entries for x and y axis of the graph
+        //init of cartesian
+        cartesian = AnyChart.column();
         List<DataEntry> data = new ArrayList<>();
 
-        for (Map.Entry<Integer, Integer> entry : graph_map.entrySet())
+        for (Map.Entry<Integer, Number> entry : graph_map.entrySet())
             data.add(new ValueDataEntry(entry.getKey(), entry.getValue()));
 
-        //  Add the data to column chart and get the columns
-        Column column = cartesian.column(data);
+        //init of column series
+        column = cartesian.column(data);
 
-        //***** Modify the UI of the chart *********/
-        // Change the color of column chart and its border
         column.fill("#1EB980");
         column.stroke("#1EB980");
 
-
-        // Modifying properties of tooltip
         column.tooltip()
                 .titleFormat("segment nr.: {%X}")
-                .format("{%Value} Steps")
+                .format("{%Value}")
                 .anchor(Anchor.RIGHT_BOTTOM);
 
-        // Modify column chart tooltip properties
         column.tooltip()
                 .position(Position.RIGHT_TOP)
                 .offsetX(0d)
                 .offsetY(5);
 
-        // Modifying properties of cartesian
         cartesian.tooltip().positionMode(TooltipPositionMode.POINT);
         cartesian.interactivity().hoverMode(HoverMode.BY_X);
         cartesian.yScale().minimum(0);
 
-
-        //  Modify the UI of the cartesian
-        cartesian.yAxis(0).title("#Steps");
+        cartesian.yAxis(0).title("#" + chartType.get(indexList));
         cartesian.xAxis(0).title("Per segment");
         cartesian.background().fill("#00000000");
         cartesian.animation(true);
 
-        //Cartesian cartesian = createColumnChart();
-        anyChartView.setBackgroundColor("#00000000");
-        anyChartView.setChart(cartesian);
+       // return cartesian;
+    }
 
-        //return cartesian;
+    private void initChartView() {
+        anyChartView = findViewById(R.id.barChart);
+        anyChartView.setBackgroundColor("#00000000");
+    }
+
+    private void updateChart(List<RunSegment> runSegments) {
+        if (runSegments.size() > 1) {
+            //anyChartView.clear();
+
+            Map<Integer, Number> graph_map = new TreeMap<>();
+
+            for (RunSegment segment : runSegments) {
+                if (indexList == 0) {
+                    Log.e("called with", "zero" + String.valueOf(segment.getSteps()));
+                    graph_map.put(runSegments.indexOf(segment) + 1, segment.getSteps());
+                } else if (indexList == 1) {
+                    Log.e("called with", "uno" + String.valueOf(segment.getKm()));
+                    graph_map.put(runSegments.indexOf(segment) + 1, segment.getKm());
+                } else {
+                    Log.e("called with", "due" + String.valueOf(segment.getCalories()));
+                    graph_map.put(runSegments.indexOf(segment) + 1, segment.getCalories());
+                }
+            }
+
+            List<DataEntry> newData = new ArrayList<>();
+
+            for (Map.Entry<Integer, Number> entry : graph_map.entrySet())
+                newData.add(new ValueDataEntry(entry.getKey(), entry.getValue()));
+
+            column.data(newData);
+            cartesian.yAxis(0).title("#" + chartType.get(indexList));
+            cartesian.xAxis(0).title("Per segment");
+        } else {
+            anyChartView.setVisibility(View.GONE);
+            buttonContainer.setVisibility(View.GONE);
+        }
     }
 
     private void createInfoItem(String titleText, String propertyText, LinearLayout layout) {

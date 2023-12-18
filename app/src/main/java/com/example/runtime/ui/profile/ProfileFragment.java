@@ -11,6 +11,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -20,12 +21,19 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.runtime.R;
+import com.example.runtime.UserMetricsActivity;
 import com.example.runtime.databinding.FragmentProfileBinding;
 import com.example.runtime.firestore.FirestoreHelper;
 import com.example.runtime.firestore.models.User;
 import com.example.runtime.sharedPrefs.SharedPreferencesHelper;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
+
+import java.util.HashMap;
+import java.util.Map;
 
 
 public class ProfileFragment extends Fragment {
@@ -36,9 +44,12 @@ public class ProfileFragment extends Fragment {
     private Button save;
     private Button cancel;
 
-    private TextView usernameEditText;
-    private TextView heightEditText;
-    private TextView weightEditText;
+    private EditText usernameEditText;
+    private EditText heightEditText;
+    private EditText weightEditText;
+
+    private String oldWeight;
+    private String oldHeight;
 
     private static final String TAG = "ProfileFragment";
 
@@ -56,9 +67,10 @@ public class ProfileFragment extends Fragment {
         edit = root.findViewById(R.id.EditButton);
         save = root.findViewById(R.id.SaveButton);
         cancel = root.findViewById(R.id.CancelButton);
-        usernameEditText = root.findViewById(R.id.textView10);
-        weightEditText = root.findViewById(R.id.textView16);
-        heightEditText = root.findViewById(R.id.textView11);
+
+        usernameEditText = root.findViewById(R.id.usernameEdit);
+        weightEditText = root.findViewById(R.id.weightEdit);
+        heightEditText = root.findViewById(R.id.heightEdit);
 
         reminderSwitch = root.findViewById(R.id.reminder_notifications);
 
@@ -83,14 +95,19 @@ public class ProfileFragment extends Fragment {
         String uuid = SharedPreferencesHelper.getFieldStringFromSP(requireContext(), "uuid");
         if (!uuid.isEmpty()) {
             getUserInfo(uuid);
+            setButtonListener(uuid);
         }
 
-        setButtonListener();
 
         return root;
     }
 
-    public void setButtonListener(){
+    private void allowEditable(boolean bool){
+        weightEditText.setEnabled(bool);
+        heightEditText.setEnabled(bool);
+    }
+
+    public void setButtonListener(String uuid){
 
         //setOnClickListener of the Edit Button
         edit.setOnClickListener(v -> {
@@ -99,15 +116,27 @@ public class ProfileFragment extends Fragment {
             cancel.setVisibility(View.VISIBLE);
             edit.setVisibility(View.GONE);
 
+            //set editTextenabled
+            allowEditable(true);
+
         });
 
         //setOnClickListener of the Save Button
         save.setOnClickListener(v -> {
+            String height = heightEditText.getText().toString();
+            String weight = weightEditText.getText().toString();
 
-            save.setVisibility(View.GONE);
-            cancel.setVisibility(View.GONE);
-            edit.setVisibility(View.VISIBLE);
+            if (!height.isEmpty() && !weight.isEmpty() && validateString(weight) && validateString(height)) {
+                updateUser(uuid, weight, height);
+                save.setVisibility(View.GONE);
+                cancel.setVisibility(View.GONE);
+                edit.setVisibility(View.VISIBLE);
 
+                //set editText not enabled
+                allowEditable(false);
+            } else {
+                Toast.makeText(requireContext(), "Not all data are filled or invalid format", Toast.LENGTH_SHORT).show();
+            }
         });
 
         //setOnClickListener of the Cancel Button
@@ -117,9 +146,89 @@ public class ProfileFragment extends Fragment {
             cancel.setVisibility(View.GONE);
             edit.setVisibility(View.VISIBLE);
 
+            //set editText not enabled
+            allowEditable(false);
 
         });
 
+    }
+
+    private void updateUser(String uuid,String weight, String height) {
+        if (uuid == null) {
+            Log.e("Firestore Update", "Invalid uuid");
+            return;
+        }
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("weight", weight);
+        data.put("height", height);
+
+        // Create a query to find the document with the specified runId property
+        Query query = FirestoreHelper.getDb().collection("users").whereEqualTo("uuid", uuid);
+
+        // Execute the query
+        query.get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        QuerySnapshot querySnapshot = task.getResult();
+                        if (querySnapshot != null && !querySnapshot.isEmpty()) {
+                            // Update the first document found with the specified runId
+                            QueryDocumentSnapshot documentSnapshot = (QueryDocumentSnapshot) querySnapshot.getDocuments().get(0);
+                            DocumentReference runRef = documentSnapshot.getReference();
+                            Log.e("snapshot id", runRef.toString());
+
+                            // Update the document with the new data
+                            runRef.update(data)
+                                    .addOnSuccessListener(aVoid -> {
+                                        // Update successful
+                                        Log.d("Firestore Update", "User updated successfully!");
+                                        SharedPreferencesHelper.insertFieldStringToSP(requireContext(), "weight", weight);
+                                        SharedPreferencesHelper.insertFieldStringToSP(requireContext(), "height", height);
+                                        updateOldValue(weight, height);
+                                    })
+                                    .addOnFailureListener(e -> {
+                                        // Handle the failure
+                                        Log.e("Firestore Update", "Error updating document: " + e.getMessage());
+                                        resetOldValue();
+                                    });
+                        } else {
+                            // Handle the case where no document with the specified runId is found
+                            Log.e("Firestore Update", "No document found with uuid: " + uuid);
+                            resetOldValue();
+                        }
+                    } else {
+                        // Handle the failure to execute the query
+                        Log.e("Firestore Update", "Error executing query: " + task.getException().getMessage());
+                        resetOldValue();
+                    }
+                });
+    }
+
+    private boolean validateString(String input) {
+        if (input == null || input.isEmpty()) {
+            return false;
+        }
+
+        if (!input.matches("\\d*\\.?\\d+")) {
+            return false;
+        }
+
+        try {
+            double number = Double.parseDouble(input);
+            return number > 10;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    private void resetOldValue() {
+        heightEditText.setText(oldHeight);
+        weightEditText.setText(oldWeight);
+    }
+
+    private void updateOldValue(String newWeight, String newHeight) {
+       oldWeight = newWeight;
+       oldHeight = newHeight;
     }
 
     // Method used to schedule notifications
@@ -166,6 +275,8 @@ public class ProfileFragment extends Fragment {
                     usernameEditText.setText(user.getUsername());
                     weightEditText.setText(user.getWeight());
                     heightEditText.setText(user.getHeight());
+                    oldWeight = user.getWeight();
+                    oldHeight = user.getHeight();
                 } else {
                     // There was an issue with conversion
                     Toast.makeText(requireContext(), "There was an issue with conversion", Toast.LENGTH_SHORT).show();

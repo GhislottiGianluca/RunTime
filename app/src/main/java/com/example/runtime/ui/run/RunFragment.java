@@ -35,7 +35,9 @@ import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.example.runtime.LoginActivity;
 import com.example.runtime.R;
+import com.example.runtime.UserMetricsActivity;
 import com.example.runtime.databinding.FragmentRunBinding;
 import com.example.runtime.firestore.FirestoreHelper;
 import com.example.runtime.sharedPrefs.SharedPreferencesHelper;
@@ -67,8 +69,8 @@ public class RunFragment extends Fragment {
     private boolean pauseManagement = true;
 
     //Users data, these data will come from the user's model
-    private float height_cm;
-    private float weight_kg;
+    private float height_cm = 170.0f;
+    private float weight_kg = 65.0f;
     private float stride_km;
 
     //Run data
@@ -153,16 +155,25 @@ public class RunFragment extends Fragment {
         View root = binding.getRoot();
 
         //TODO, user data initialisation
-        height_cm = 170.0f;
-        weight_kg = 65.5f;
+        String userUuid = SharedPreferencesHelper.getFieldStringFromSP(requireContext(), "uuid");
+        String height = SharedPreferencesHelper.getFieldStringFromSP(requireContext(), "height");
+        String weight = SharedPreferencesHelper.getFieldStringFromSP(requireContext(), "weight");
+
+         if ((userUuid == null || userUuid.isEmpty()) ||
+                 (height == null || height.isEmpty()) ||
+                 (weight == null || weight.isEmpty())) {
+           //navigate to login !!
+            navigateToLogin();
+        } else {
+             height_cm = Float.parseFloat(height);
+             weight_kg = Float.parseFloat(weight);
+         }
+
         stride_km = (float) (height_cm * 0.65) / 1_000_000;
 
-        String userUuid = SharedPreferencesHelper.getFieldStringFromSP(requireContext(), "uuid");
 
         //todo in a second moment
-       /* if (userUuid != null && !userUuid.equals("")) {
-           //navigate to login !!
-        }*/
+
 
         //Button settings
         play = root.findViewById(R.id.play);
@@ -401,10 +412,6 @@ public class RunFragment extends Fragment {
             //Chronometer handling
             chronometer.stop();
 
-
-            pauseManagement = false;
-
-
             //2 possibility:
             // user stop run while it is in pause (no need to create last segment),
             // user stops run while it is running (it needs to create last segment)
@@ -418,6 +425,8 @@ public class RunFragment extends Fragment {
                 createRunSegment(runId, startRunDateTime, endRunSegmentDateTime, geoPoints);
                 //Toast.makeText(requireContext(), "ended session, uploading last segment", Toast.LENGTH_SHORT).show();
             }
+
+            pauseManagement = false;
 
             Toast.makeText(requireContext(), "stop collecting geopoint", Toast.LENGTH_SHORT).show();
             stopLocationUpdates();
@@ -609,6 +618,13 @@ public class RunFragment extends Fragment {
 
         super.onDestroyView();
         binding = null;
+    }
+
+    private void navigateToLogin() {
+        SharedPreferencesHelper.clearSP(requireContext());
+        Intent intent = new Intent(requireContext(), LoginActivity.class);
+        startActivity(intent);
+        requireActivity().finish(); // Avoid navigating back
     }
 
 ////////////////////////////////////////////////////////////////////////////////////

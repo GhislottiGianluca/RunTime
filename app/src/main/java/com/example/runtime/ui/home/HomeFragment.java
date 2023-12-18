@@ -11,15 +11,21 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
+import androidx.navigation.fragment.NavHostFragment;
 
 import com.example.runtime.LoginActivity;
+import com.example.runtime.R;
 import com.example.runtime.databinding.FragmentHomeBinding;
 import com.example.runtime.firestore.FirestoreHelper;
 import com.example.runtime.firestore.models.Run;
 import com.example.runtime.firestore.models.RunSegment;
 import com.example.runtime.sharedPrefs.SharedPreferencesHelper;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -35,6 +41,12 @@ public class HomeFragment extends Fragment {
     private FragmentHomeBinding binding;
 
     private Button logoutButton;
+
+    private ConstraintLayout performaceBox;
+
+    private LinearLayout noDataBox;
+
+    private Button navigateToRunButton;
 
     private TextView stepsText;
     private TextView caloriesText;
@@ -54,6 +66,13 @@ public class HomeFragment extends Fragment {
 
         final TextView textView = binding.textHome;
         homeViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
+
+        performaceBox = binding.dataContainer;
+        noDataBox = binding.newUserOptionContainer;
+
+        //problem with navBarNavigation
+        navigateToRunButton = binding.letsStartButton;
+        navigateToRunButton.setVisibility(View.GONE);
 
         stepsText = binding.textSteps;
         kmText = binding.textKm;
@@ -78,9 +97,15 @@ public class HomeFragment extends Fragment {
         if (!uuid.isEmpty()) {
             //testBackend
             getRunsFromBackend(uuid, runs);
-        } else {
-            updateUI(runs);
         }
+
+        // Set up the NavController
+       /* NavController navController = NavHostFragment.findNavController(this);
+        //NavController  navController = findNavController(R.id.nav_host_fragment_activity_main);
+        navigateToRunButton.setOnClickListener(e -> {
+            navController.navigate(R.id.action_navigation_home_to_navigation_run);
+        });*/
+
 
 
         return root;
@@ -115,12 +140,14 @@ public class HomeFragment extends Fragment {
 
     private void updateUI(List<Run> runs) {
         if (runs.isEmpty()) {
-            stepsText.setText("N/A");
-            kmText.setText("N/A");
-            caloriesText.setText("N/A");
-            timeText.setText("N/A");
+            performaceBox.setVisibility(View.GONE);
+            noDataBox.setVisibility(View.VISIBLE);
             return;
         }
+
+        performaceBox.setVisibility(View.VISIBLE);
+        noDataBox.setVisibility(View.GONE);
+
         DecimalFormat df = new DecimalFormat("#.###");
         //property prep
         int totalSteps = runs.stream().mapToInt(Run::getTotSteps).sum();

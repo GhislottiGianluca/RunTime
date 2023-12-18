@@ -1,11 +1,13 @@
 package com.example.runtime.ui.activity;
 
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -24,6 +26,7 @@ import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.core.OrderBy;
 
+import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -66,8 +69,23 @@ public class ActivityFragment extends Fragment {
 
         // Customize the card content based on item data
         TextView cardText = cardView.findViewById(R.id.cardText);
-        //cardText.setText(item.getRunId());
-        cardText.setText("Run Session nr: " + listIndex);
+        DecimalFormat df = new DecimalFormat("#.##");
+        cardText.setText("Total KM: " + df.format(item.getTotalKm()));
+
+        ImageView cardImg = cardView.findViewById(R.id.cardImg);
+
+        Drawable drawable;
+
+        if(item.getTotalKm() < 2){
+           drawable = getResources().getDrawable(R.drawable.normal_run);
+        } else if (item.getTotalKm() < 5) {
+            drawable = getResources().getDrawable(R.drawable.good_run);
+        } else {
+            drawable = getResources().getDrawable(R.drawable.great_run);
+        }
+
+        // Set the drawable to the ImageView
+        cardImg.setImageDrawable(drawable);
 
 
         TextView startSession = cardView.findViewById(R.id.startSession);
@@ -79,11 +97,6 @@ public class ActivityFragment extends Fragment {
             navigateToDetailScreen(item.getRunId());
         });
 
-        //int cardBackgroundColor = getResources().getColor(R.color.activityCardBackground);
-        //cardView.setCardBackgroundColor(cardBackgroundColor);
-        //cardView.setRadius(25);
-
-        //cardView.setPadding(0, 20, 0, 20);
         // Add the card to the container
         cardContainer.addView(cardView);
     }

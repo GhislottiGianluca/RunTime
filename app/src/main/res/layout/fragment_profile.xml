@@ -6,34 +6,18 @@
     android:layout_height="match_parent">
 
     <TextView
-        android:id="@+id/ChangePasswordText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:fontFamily="sans-serif-black"
-        android:text="@string/change_password"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.455"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <TextView
         android:id="@+id/changePasswordText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="256dp"
+        android:layout_marginBottom="300dp"
         android:fontFamily="sans-serif-black"
         android:text="@string/notifications"
         android:textSize="24sp"
         android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.462"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/ChangePasswordText" />
+        app:layout_constraintHorizontal_bias="0.463"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
         android:id="@+id/UserDataText"
@@ -43,68 +27,57 @@
         android:text="@string/user_data"
         android:textSize="24sp"
         android:textStyle="bold"
-        app:layout_constraintBottom_toTopOf="@+id/ChangePasswordText"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.498"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.091" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <Button
         android:id="@+id/EditButton"
         android:layout_width="86dp"
         android:layout_height="50dp"
-        android:layout_marginBottom="8dp"
         android:text="@string/edit"
-        app:layout_constraintBottom_toTopOf="@+id/ChangePasswordText"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.791"
+        app:layout_constraintHorizontal_bias="0.815"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.9" />
+        app:layout_constraintTop_toBottomOf="@+id/linearLayout3" />
 
     <Button
         android:id="@+id/SaveButton"
         android:layout_width="86dp"
         android:layout_height="50dp"
-        android:layout_marginBottom="8dp"
         android:text="@string/save"
         android:visibility="gone"
-        app:layout_constraintBottom_toTopOf="@+id/ChangePasswordText"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.791"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.9" />
+        app:layout_constraintTop_toBottomOf="@+id/linearLayout3" />
 
     <Button
         android:id="@+id/CancelButton"
         android:layout_width="98dp"
         android:layout_height="49dp"
-        android:layout_marginBottom="8dp"
+        android:layout_marginTop="15dp"
         android:text="@string/cancel"
         android:visibility="gone"
-        app:layout_constraintBottom_toTopOf="@+id/ChangePasswordText"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.223"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.897" />
+        app:layout_constraintTop_toBottomOf="@+id/linearLayout3" />
 
     <Switch
         android:id="@+id/reminder_notifications"
         android:layout_width="355dp"
         android:layout_height="53dp"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
         android:layout_marginEnd="16dp"
-        android:layout_marginBottom="200dp"
+        android:layout_marginBottom="244dp"
         android:text="@string/receive_reminders"
         android:textSize="18sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.291"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/changePasswordText"
         tools:ignore="UseSwitchCompatOrMaterialXml" />
 
     <LinearLayout
@@ -112,41 +85,41 @@
         android:layout_width="344dp"
         android:layout_height="147dp"
         android:layout_marginTop="32dp"
-        android:layout_marginBottom="96dp"
-        android:orientation="horizontal"
-        app:layout_constraintBottom_toTopOf="@+id/ChangePasswordText"
+        android:gravity="center"
+        android:orientation="vertical"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/UserDataText">
 
         <LinearLayout
-            android:layout_width="242dp"
-            android:layout_height="match_parent"
-            android:orientation="vertical">
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
 
             <TextView
                 android:id="@+id/UsernameText"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:fontFamily="sans-serif-black"
                 android:text="@string/username_text"
                 android:textSize="18sp" />
 
-            <TextView
-                android:id="@+id/NameText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:fontFamily="sans-serif-black"
-                android:text="@string/name_text"
-                android:textSize="18sp" />
-
-            <TextView
-                android:id="@+id/LastNameText"
+            <EditText
+                android:id="@+id/usernameEdit"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:fontFamily="sans-serif-black"
-                android:text="@string/last_name_text"
+                android:layout_weight="1"
+                android:enabled="false"
+                android:text="@string/username"
+                android:textAlignment="textEnd"
                 android:textSize="18sp" />
+        </LinearLayout>
+
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
 
             <TextView
                 android:id="@+id/HeightText"
@@ -156,6 +129,23 @@
                 android:text="@string/height_cm"
                 android:textSize="18sp" />
 
+            <EditText
+                android:id="@+id/heightEdit"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:enabled="false"
+                android:inputType="number"
+                android:text="@string/height"
+                android:textAlignment="textEnd"
+                android:textSize="18sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
             <TextView
                 android:id="@+id/WeightText"
                 android:layout_width="wrap_content"
@@ -163,48 +153,20 @@
                 android:fontFamily="sans-serif-black"
                 android:text="@string/weight_kg"
                 android:textSize="18sp" />
-        </LinearLayout>
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/textView10"
+            <EditText
+                android:id="@+id/weightEdit"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/username"
-                android:textSize="18sp" />
-
-            <TextView
-                android:id="@+id/textView13"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/name"
-                android:textSize="18sp" />
-
-            <TextView
-                android:id="@+id/textView12"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/lastname"
-                android:textSize="18sp" />
-
-            <TextView
-                android:id="@+id/textView11"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/height"
-                android:textSize="18sp" />
-
-            <TextView
-                android:id="@+id/textView16"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:enabled="false"
+                android:inputType="numberDecimal"
                 android:text="@string/weight"
+                android:textAlignment="textEnd"
                 android:textSize="18sp" />
         </LinearLayout>
+
+
     </LinearLayout>
 
 

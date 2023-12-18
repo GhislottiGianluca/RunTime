@@ -43,4 +43,11 @@
     <string name="user_data">User Data</string>
     <string name="last_name_text">Last Name :</string>
 
+    <string name="user_metrics">Please add your metrics for a better experience</string>
+    <string name="buttonUpdateUser">Save Metrics</string>
+
+
+    <string name="welcomeMessage">Opsss... it seems you are new to RunTime\n Take a run and we will display your overall performance here </string>
+
+
 </resources>

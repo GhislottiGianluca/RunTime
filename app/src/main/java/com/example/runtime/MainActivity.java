@@ -2,8 +2,10 @@ package com.example.runtime;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.content.Intent;
 import android.os.Bundle;
 
+import com.example.runtime.sharedPrefs.SharedPreferencesHelper;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -28,6 +30,18 @@ public class MainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+        String uuid = SharedPreferencesHelper.getFieldStringFromSP(this, "uuid");
+        if(uuid == null || uuid.isEmpty()){
+            navigateToLogin();
+        }
+        String weight = SharedPreferencesHelper.getFieldStringFromSP(this, "weight");
+        String height = SharedPreferencesHelper.getFieldStringFromSP(this, "height");
+
+        if((weight == null || weight.isEmpty()) || (height == null || height.isEmpty())){
+            navigateToUserMetrics();
+        }
+
+
         BottomNavigationView navView = findViewById(R.id.nav_view);
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
@@ -47,6 +61,20 @@ public class MainActivity extends AppCompatActivity {
         NotificationManager notificationManager = getSystemService(NotificationManager.class);
         notificationManager.createNotificationChannel(channel);
 
+    }
+
+    private void navigateToLogin() {
+        SharedPreferencesHelper.clearSP(this);
+        Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+        startActivity(intent);
+        finish(); // Avoid navigating back
+    }
+
+    private void navigateToUserMetrics() {
+        //case login successfull but no usermetrics available
+        Intent intent = new Intent(MainActivity.this, UserMetricsActivity.class);
+        startActivity(intent);
+        finish();
     }
 
 }

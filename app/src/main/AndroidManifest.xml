@@ -27,6 +27,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".RegisterActivity"/>
+        <activity android:name=".UserMetricsActivity"/>
         <activity
             android:name=".MainActivity"
             android:exported="true"

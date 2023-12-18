@@ -100,10 +100,22 @@ public class LoginActivity extends AppCompatActivity {
     private void handleSuccessfulLogin(String username, User user) {
         SharedPreferencesHelper.insertFieldStringToSP(this, "username", username);
         SharedPreferencesHelper.insertFieldStringToSP(this, "uuid", user.getUuid());
+
         Toast.makeText(LoginActivity.this, "Login successful", Toast.LENGTH_SHORT).show();
-        Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-        startActivity(intent);
-        finish(); // Avoid navigating back to LoginActivity
+
+        if((user.getHeight() != null && !user.getHeight().isEmpty()) && (user.getWeight() != null && !user.getWeight().isEmpty()) ){
+            SharedPreferencesHelper.insertFieldStringToSP(this, "weight", user.getWeight());
+            SharedPreferencesHelper.insertFieldStringToSP(this, "height", user.getHeight());
+            Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+            startActivity(intent);
+            finish(); // Avoid navigating back to LoginActivity
+        } else {
+            //need to insert usermetrics
+            Intent intent = new Intent(LoginActivity.this, UserMetricsActivity.class);
+            startActivity(intent);
+            finish();
+        }
+
     }
 
     private void navigateToRegisterScreen() {
