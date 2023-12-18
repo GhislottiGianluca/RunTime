@@ -48,6 +48,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.DecimalFormat;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -197,9 +198,11 @@ public class ActivityDetail extends AppCompatActivity {
 
         LocalDateTime startRun = FirestoreHelper.getLocalDateTimeFromFirebaseTimestamp(runSegments.get(0).getStartDateTime());
         LocalDateTime endRun = FirestoreHelper.getLocalDateTimeFromFirebaseTimestamp(runSegments.get(runSegments.size() - 1).getEndDateTime());
-        long totalMinutes = ChronoUnit.MINUTES.between(endRun, startRun);
+        long totalMinutes = ChronoUnit.MINUTES.between(startRun, endRun);
+        long totalSeconds = ChronoUnit.SECONDS.between(startRun, endRun) - totalMinutes * 60;
+        String timeFormatted = String.format("%d:%02d", totalMinutes, totalSeconds);
 
-        Log.e("chr", String.valueOf(totalMinutes));
+        Log.e("chr", timeFormatted);
 
         DecimalFormat df = new DecimalFormat("#.##");
 
@@ -208,19 +211,18 @@ public class ActivityDetail extends AppCompatActivity {
         double calories = runSegments.stream().mapToDouble(item -> item.getCalories()).sum();
         double averagePace = runSegments.stream().mapToDouble(item -> item.getAveragePace()).sum() / runSegments.size();
 
-        //DATA TO SHARE
         stepsText.setText(String.valueOf(totalSteps) + " steps");
         caloriesText.setText(df.format(calories) + " cal");
         paceText.setText(df.format(averagePace) + " min/Km");
         kmText.setText(df.format(totalDistanceKM) + " km");
-        durationText.setText(String.valueOf(totalMinutes) + " min");
+        durationText.setText(timeFormatted);
 
         createPdf(String.valueOf(totalSteps) + "total steps",
                 df.format(calories) + " calories",
                 df.format(averagePace) + " min/Km",
                 df.format(totalDistanceKM) + " km",
-                String.valueOf(totalMinutes) + " min");
-
+                timeFormatted + " min");
+        
     }
 
     private void initMapView(List<RunSegment> runSegments) {
@@ -353,21 +355,21 @@ public class ActivityDetail extends AppCompatActivity {
 
         Canvas canvas = page.getCanvas();
         Paint paint = new Paint();
-        int x = 10, y = 25; // Iniziamo da 10, 25
+        int x = 10, y = 25;
 
-        canvas.drawText("Passi: " + steps, x, y, paint);
-        y += 15; // Aggiungi spazio tra le righe
-        canvas.drawText("Calorie: " + calories, x, y, paint);
+        canvas.drawText("Steps: " + steps, x, y, paint);
         y += 15;
-        canvas.drawText("Ritmo Medio: " + averagePace, x, y, paint);
+        canvas.drawText("Calories: " + calories, x, y, paint);
         y += 15;
-        canvas.drawText("Distanza Totale: " + totalKm, x, y, paint);
+        canvas.drawText("Average Pace: " + averagePace, x, y, paint);
         y += 15;
-        canvas.drawText("Durata Totale: " + totMin, x, y, paint);
+        canvas.drawText("Total distance: " + totalKm, x, y, paint);
+        y += 15;
+        canvas.drawText("Duration: " + totMin, x, y, paint);
 
         document.finishPage(page);
 
-        // Scrive il documento in un file
+        // Write the document in a file
         String filePath = getExternalFilesDir(null).getAbsolutePath() + "/mypdf.pdf";
         File file = new File(filePath);
         try {
@@ -376,14 +378,14 @@ public class ActivityDetail extends AppCompatActivity {
             e.printStackTrace();
         }
 
-        // Chiudi il documento
+        //Close the document
         document.close();
     }
 
     private void sharePdf() {
         File file = new File(getExternalFilesDir(null), "mypdf.pdf");
+
         if (!file.exists()) {
-            // Se il file non esiste, mostra un messaggio di errore o genera il PDF
             Toast.makeText(this, "PDF not found.", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -393,6 +395,6 @@ public class ActivityDetail extends AppCompatActivity {
         intent.setType("application/pdf");
         intent.putExtra(Intent.EXTRA_STREAM, uri);
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        startActivity(Intent.createChooser(intent, "Condividi PDF tramite:"));
+        startActivity(Intent.createChooser(intent, "Share PDF via:"));
     }
 }
