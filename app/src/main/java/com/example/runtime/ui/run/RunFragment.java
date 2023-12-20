@@ -89,7 +89,7 @@ public class RunFragment extends Fragment {
     private float km_local_value;
     private float calories_local_value;
 
-    // Data running textView
+    // Running textView
     private TextView averagePace;
     private TextView actualPace;
     private TextView calories;
@@ -104,6 +104,7 @@ public class RunFragment extends Fragment {
     private SensorManager sensorManager;
     private StepCounterListener sensorListener;
 
+
     List<LocalDateTime> globalList = new ArrayList<>();
     List<LocalDateTime> localList = new ArrayList<>();
 
@@ -117,17 +118,17 @@ public class RunFragment extends Fragment {
     //Variable used for the vibration
     private Vibrator vibrator;
 
-
     //Variable used to track every integer number of km reached by the user
     int lastIntKmValue = 0;
+
 
     String runId = "";
 
     LocalDateTime startRunDateTime = null;
 
     private ArrayList<GeoPoint> geoPoints = new ArrayList<>();
-    private static final int LOCATION_PERMISSION_REQUEST_CODE = 123; // it is possible to use any value
-    private static final int RECORD_AUDIO_PERMISSION_REQUEST_CODE = 456; // it is possible to use any value
+    private static final int LOCATION_PERMISSION_REQUEST_CODE = 123;
+    private static final int RECORD_AUDIO_PERMISSION_REQUEST_CODE = 456;
 
     private int LOCATION_REFRESH_TIME = 5000; // ms
     private int LOCATION_REFRESH_DISTANCE = 10; // meters
@@ -154,24 +155,24 @@ public class RunFragment extends Fragment {
         binding = FragmentRunBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
+
+        //Variable initialisation from the database to do all the necessary calculation
         String userUuid = SharedPreferencesHelper.getFieldStringFromSP(requireContext(), "uuid");
         String height = SharedPreferencesHelper.getFieldStringFromSP(requireContext(), "height");
         String weight = SharedPreferencesHelper.getFieldStringFromSP(requireContext(), "weight");
 
-         if ((userUuid == null || userUuid.isEmpty()) ||
-                 (height == null || height.isEmpty()) ||
-                 (weight == null || weight.isEmpty())) {
-           //navigate to login !!
+        if ((userUuid == null || userUuid.isEmpty()) ||
+                (height == null || height.isEmpty()) ||
+                (weight == null || weight.isEmpty())) {
+            //navigate to login
             navigateToLogin();
         } else {
-             height_cm = Float.parseFloat(height);
-             weight_kg = Float.parseFloat(weight);
-         }
+            height_cm = Float.parseFloat(height);
+            weight_kg = Float.parseFloat(weight);
+        }
 
+        //stride already converted in km
         stride_km = (float) (height_cm * 0.65) / 1_000_000;
-
-
-        //todo in a second moment
 
 
         //Button settings
@@ -189,6 +190,7 @@ public class RunFragment extends Fragment {
         sensorManager = (SensorManager) getActivity().getSystemService(Context.SENSOR_SERVICE);
         accSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
 
+        //Chronometer variable
         chronometer = root.findViewById(R.id.time);
 
         //TextToSpeech variable initialisation
@@ -218,43 +220,10 @@ public class RunFragment extends Fragment {
             requestLocationPermissions();
         }
 
+        //Set button listener for all the button of the fragment
         setButtonListener(userUuid);
 
         return root;
-    }
-
-    private boolean hasAudioRecordPermissions() {
-        // Check if the app has the necessary location permissions
-        return ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
-    }
-
-    private void requestAudioRecordPermissions() {
-        // Request location permissions
-        ActivityCompat.requestPermissions(requireActivity(), new String[]{Manifest.permission.RECORD_AUDIO}, RECORD_AUDIO_PERMISSION_REQUEST_CODE);
-    }
-
-    private boolean hasLocationPermissions() {
-        // Check if the app has the necessary location permissions
-        return ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
-    }
-
-    private void requestLocationPermissions() {
-        // Request location permissions
-        ActivityCompat.requestPermissions(requireActivity(), new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
-            // Check if the permission was granted
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Permission granted, start location updates
-                //startLocationUpdates();
-            } else {
-                // Permission denied, handle accordingly (e.g., show a message to the user)
-                Toast.makeText(requireContext(), "Location permission denied", Toast.LENGTH_SHORT).show();
-            }
-        }
     }
 
     private void startLocationUpdates() {
@@ -571,7 +540,7 @@ public class RunFragment extends Fragment {
         localList.addAll(last);
 
 
-        //Actual Pace
+        //Actual Pace calculation and update
         actualPace_value = ChronoUnit.MILLIS.between(last.get(0), last.get(4)) / 60000.0;
         if (stride_km > 0 && actualPace_value > 0) {
             double actualPace_valued = actualPace_value / (stride_km * 5);
@@ -581,7 +550,7 @@ public class RunFragment extends Fragment {
             actualPace.setText(actualPaceFormatted);
         }
 
-        //Average Pace
+        //Average Pace calculation and update
         averagePace_value = ChronoUnit.MILLIS.between(globalList.get(0), last.get(4)) / 60000.0;
         int averagePaceMinPart = 0;
         int averagePaceSecPart = 0;
@@ -597,10 +566,12 @@ public class RunFragment extends Fragment {
         //Notifies the user when each kilometer is reached
         if ((int) km_value > lastIntKmValue) {
 
+            //At every km reached, the app notify it to the user via vibration
             if (vibrator != null && vibrator.hasVibrator()) {
                 vibrator.vibrate(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE));
             }
 
+            //via audio instaed, the app will say the total km reached and the relative average pace
             textToSpeech.speak("" + (int) km_value + "kilometers, average pace:" + averagePaceMinPart + " minutes," + averagePaceSecPart + "seconds per kilometer.",
                     TextToSpeech.QUEUE_FLUSH, null, null);
             lastIntKmValue = (int) km_value;
@@ -706,6 +677,7 @@ public class RunFragment extends Fragment {
 
     }
 
+
     public void createRunSegment(String runId, LocalDateTime startDateTime, LocalDateTime endDateTime, ArrayList<GeoPoint> geoPoints) {
 
         //update total values
@@ -746,12 +718,49 @@ public class RunFragment extends Fragment {
                 });
     }
 
+
+
+
+    //Methods used to handle the permission
     private void updateTotValues() {
         totSteps += localList.size();
         totCalories += calories_local_value;
         totKm += km_local_value;
     }
 
+    private boolean hasAudioRecordPermissions() {
+        // Check if the app has the necessary location permissions
+        return ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void requestAudioRecordPermissions() {
+        // Request location permissions
+        ActivityCompat.requestPermissions(requireActivity(), new String[]{Manifest.permission.RECORD_AUDIO}, RECORD_AUDIO_PERMISSION_REQUEST_CODE);
+    }
+
+    private boolean hasLocationPermissions() {
+        // Check if the app has the necessary location permissions
+        return ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void requestLocationPermissions() {
+        // Request location permissions
+        ActivityCompat.requestPermissions(requireActivity(), new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+            // Check if the permission was granted
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permission granted, start location updates
+                //startLocationUpdates();
+            } else {
+                // Permission denied, handle accordingly (e.g., show a message to the user)
+                Toast.makeText(requireContext(), "Location permission denied", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
 
 }
 
