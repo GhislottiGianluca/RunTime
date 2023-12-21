@@ -21,10 +21,8 @@ import com.example.runtime.firestore.FirestoreHelper;
 import com.example.runtime.firestore.models.Run;
 import com.example.runtime.sharedPrefs.SharedPreferencesHelper;
 import com.example.runtime.ui.activityDetails.ActivityDetail;
-import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.core.OrderBy;
 
 import java.text.DecimalFormat;
 import java.time.LocalDateTime;
@@ -42,7 +40,6 @@ public class ActivityFragment extends Fragment {
         binding = FragmentActivityBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
-        // Assuming you have a list of items from your backend
         List<Run> runs = new ArrayList<>();
         LinearLayout cardContainer = root.findViewById(R.id.cardContainer);
         String userUuid = SharedPreferencesHelper.getFieldStringFromSP(requireContext(), "uuid");
@@ -56,15 +53,13 @@ public class ActivityFragment extends Fragment {
     }
 
     private void updateUI(List<Run> itemList, LinearLayout cardContainer) {
-        Log.w("UI updating", "Launched updateUI req");
-
         for (Run item : itemList) {
             // Inflate the card item layout
-           createCard(item, itemList.indexOf(item), cardContainer);
+            createActivityCard(item, cardContainer);
         }
     }
 
-    private void createCard(Run item, int listIndex, LinearLayout cardContainer){
+    private void createActivityCard(Run item, LinearLayout cardContainer) {
         CardView cardView = (CardView) LayoutInflater.from(requireContext()).inflate(R.layout.activity_card, cardContainer, false);
 
         // Customize the card content based on item data
@@ -76,8 +71,9 @@ public class ActivityFragment extends Fragment {
 
         Drawable drawable;
 
-        if(item.getTotalKm() < 2){
-           drawable = getResources().getDrawable(R.drawable.normal_run);
+        //set one of 3 possible icons based on user activity results
+        if (item.getTotalKm() < 2) {
+            drawable = getResources().getDrawable(R.drawable.normal_run);
         } else if (item.getTotalKm() < 5) {
             drawable = getResources().getDrawable(R.drawable.good_run);
         } else {
@@ -87,13 +83,11 @@ public class ActivityFragment extends Fragment {
         // Set the drawable to the ImageView
         cardImg.setImageDrawable(drawable);
 
-
         TextView startSession = cardView.findViewById(R.id.startSession);
         LocalDateTime start = FirestoreHelper.getLocalDateTimeFromFirebaseTimestamp(item.getStartDateTime());
         startSession.setText(FirestoreHelper.formatDateTime(start));
 
         cardView.setOnClickListener(view -> {
-            // Handle card click, e.g., navigate to detail screen
             navigateToDetailScreen(item.getRunId());
         });
 
@@ -106,16 +100,11 @@ public class ActivityFragment extends Fragment {
         FirestoreHelper.getDb().collection("runs")
                 .whereEqualTo("userUuid", userUuid).orderBy("startDateTime", Query.Direction.ASCENDING).get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
-                    Log.w("RUN", "try to deserialize run");
                     for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
-                        Log.w("RUN shap", "try  run");
                         Run run = document.toObject(Run.class);
                         runs.add(run);
                     }
-
-                    runs.forEach(run -> Log.d(run.getRunId(), "at time " + run.getStartDateTime()));
-                    Log.w("Update UI", "try  to updating ui");
-                    //to reflect the changes
+                    //show data from to more recent to older
                     Collections.reverse(runs);
                     updateUI(runs, cardContainer);
                 })

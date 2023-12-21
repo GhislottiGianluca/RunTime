@@ -2,7 +2,6 @@ package com.example.runtime;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.SystemClock;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
@@ -19,7 +18,6 @@ import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 public class UserMetricsActivity extends AppCompatActivity {
 
@@ -57,6 +55,7 @@ public class UserMetricsActivity extends AppCompatActivity {
         });
     }
 
+    //adding metrics data to user model
     private void updateUser(String uuid,String weight, String height) {
         if (uuid == null) {
             Log.e("Firestore Update", "Invalid uuid");
@@ -67,7 +66,6 @@ public class UserMetricsActivity extends AppCompatActivity {
         data.put("weight", weight);
         data.put("height", height);
 
-        // Create a query to find the document with the specified runId property
         Query query = FirestoreHelper.getDb().collection("users").whereEqualTo("uuid", uuid);
 
         // Execute the query
@@ -76,7 +74,7 @@ public class UserMetricsActivity extends AppCompatActivity {
                     if (task.isSuccessful()) {
                         QuerySnapshot querySnapshot = task.getResult();
                         if (querySnapshot != null && !querySnapshot.isEmpty()) {
-                            // Update the first document found with the specified runId
+                            // Update the first document found with the specified uuid
                             QueryDocumentSnapshot documentSnapshot = (QueryDocumentSnapshot) querySnapshot.getDocuments().get(0);
                             DocumentReference runRef = documentSnapshot.getReference();
                             Log.e("snapshot id", runRef.toString());
@@ -96,7 +94,6 @@ public class UserMetricsActivity extends AppCompatActivity {
                                         Log.e("Firestore Update", "Error updating document: " + e.getMessage());
                                     });
                         } else {
-                            // Handle the case where no document with the specified runId is found
                             Log.e("Firestore Update", "No document found with uuid: " + uuid);
                         }
                     } else {
@@ -119,6 +116,7 @@ public class UserMetricsActivity extends AppCompatActivity {
         finish(); // Avoid navigating back
     }
 
+    //a first implementation to validate the metrics data
     private boolean validateString(String input) {
         if (input == null || input.isEmpty()) {
             return false;

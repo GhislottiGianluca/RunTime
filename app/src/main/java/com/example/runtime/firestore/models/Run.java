@@ -2,10 +2,6 @@ package com.example.runtime.firestore.models;
 
 import com.google.firebase.Timestamp;
 
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-
 public class Run {
     private String runId;
     private String userUuid;

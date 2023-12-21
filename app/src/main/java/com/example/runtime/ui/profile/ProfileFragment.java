@@ -13,7 +13,6 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Switch;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -21,7 +20,6 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.runtime.R;
-import com.example.runtime.UserMetricsActivity;
 import com.example.runtime.databinding.FragmentProfileBinding;
 import com.example.runtime.firestore.FirestoreHelper;
 import com.example.runtime.firestore.models.User;
@@ -80,7 +78,6 @@ public class ProfileFragment extends Fragment {
         reminderSwitch.setChecked(isSwitchOn);
 
         reminderSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            // Salva lo stato dello switch nelle SharedPreferences
             SharedPreferences.Editor editor = sharedPref.edit();
             editor.putBoolean("EncouragementSwitchState", isChecked);
             editor.apply();
@@ -108,17 +105,13 @@ public class ProfileFragment extends Fragment {
     }
 
     public void setButtonListener(String uuid){
-
         //setOnClickListener of the Edit Button
         edit.setOnClickListener(v -> {
-
             save.setVisibility(View.VISIBLE);
             cancel.setVisibility(View.VISIBLE);
             edit.setVisibility(View.GONE);
-
             //set editTextenabled
             allowEditable(true);
-
         });
 
         //setOnClickListener of the Save Button
@@ -172,7 +165,6 @@ public class ProfileFragment extends Fragment {
                     if (task.isSuccessful()) {
                         QuerySnapshot querySnapshot = task.getResult();
                         if (querySnapshot != null && !querySnapshot.isEmpty()) {
-                            // Update the first document found with the specified runId
                             QueryDocumentSnapshot documentSnapshot = (QueryDocumentSnapshot) querySnapshot.getDocuments().get(0);
                             DocumentReference runRef = documentSnapshot.getReference();
                             Log.e("snapshot id", runRef.toString());
@@ -256,14 +248,15 @@ public class ProfileFragment extends Fragment {
         binding = null;
     }
 
+    //check if user with uuid exist in the collection
     private void getUserInfo(String uuid){
         FirestoreHelper.getDb().collection("users")
                 .whereEqualTo("uuid", uuid)
                 .get()
-                .addOnCompleteListener(this::handleLoginResult);
+                .addOnCompleteListener(this::handleRenderUserData);
     }
 
-    private void handleLoginResult(Task<QuerySnapshot> task) {
+    private void handleRenderUserData(Task<QuerySnapshot> task) {
         if (task.isSuccessful()) {
             QuerySnapshot querySnapshot = task.getResult();
 

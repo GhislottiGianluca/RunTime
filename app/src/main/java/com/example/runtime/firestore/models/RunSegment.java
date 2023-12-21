@@ -4,7 +4,6 @@ import com.google.firebase.Timestamp;
 
 import org.osmdroid.util.GeoPoint;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Map;
 

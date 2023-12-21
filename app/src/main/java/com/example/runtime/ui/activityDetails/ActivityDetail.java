@@ -8,7 +8,6 @@ import android.graphics.pdf.PdfDocument;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
@@ -17,7 +16,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.FileProvider;
 
 import com.anychart.AnyChart;
@@ -48,7 +46,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.DecimalFormat;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -64,8 +61,6 @@ public class ActivityDetail extends AppCompatActivity {
     private MapView mapView;
 
     private AnyChartView anyChartView;
-
-    private ConstraintLayout runInfo;
 
     //Button used to handle the activity sharing
     private ImageButton shareButton;
@@ -96,8 +91,6 @@ public class ActivityDetail extends AppCompatActivity {
         // Retrieve the runId from the Intent
         String runId = getIntent().getStringExtra("runId");
 
-        //TextView textView = findViewById(R.id.detailTitle);
-
         List<RunSegment> runSegments = new ArrayList<>();
 
         // Set the user agent for osmdroid
@@ -114,12 +107,10 @@ public class ActivityDetail extends AppCompatActivity {
 
         buttonContainer = findViewById(R.id.buttonContainer);
 
-        //todo: enjoy the sharing
         shareButton = findViewById(R.id.shareButton);
-
         shareButton.setOnClickListener(v -> sharePdf());
 
-        //testBackend
+        //try to get data from backend
         getRunSegmentsFromBackend(runId, runSegments);
 
         //map settings
@@ -157,27 +148,24 @@ public class ActivityDetail extends AppCompatActivity {
 
     }
 
+    //if success, update ui
     private void getRunSegmentsFromBackend(String runId, List<RunSegment> runSegments) {
         CollectionReference runsCollection = FirestoreHelper.getDb().collection("runSegments");
         Query query = runsCollection.whereEqualTo("runId", runId);
-
         query.get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
-                    Log.w("RUN SEGMENT", "try to deserialize segment");
                     for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
                         RunSegment segment = document.toObject(RunSegment.class);
                         runSegments.add(segment);
                     }
-                    //runSegments.forEach(segment -> Log.d(segment.getRunId(), "at time " + FirestoreHelper.getLocalDateTimeFromFirebaseTimestampLocalDateTime(segment.getStartDateTime()) ));
-
                     updateUI(runSegments);
-
                 })
                 .addOnFailureListener(e -> {
                     Log.w("failed to get run", "Error adding document", e);
                 });
     }
 
+    //pass the right property to the main ui elements
     private void updateUI(List<RunSegment> runSegments) {
         if (runSegments.isEmpty()) {
             return;
@@ -186,23 +174,20 @@ public class ActivityDetail extends AppCompatActivity {
         //init mapView if data are available
         initMapView(runSegments);
 
+        //makes sense to display the chart only if user completed different segments
         if (runSegments.size() > 1) {
             //init chart
             createColumnChart(runSegments);
             anyChartView.setChart(cartesian);
-            //updateChart(runSegments);
         }
 
 
-        //property prep
-
+        //property preparation
         LocalDateTime startRun = FirestoreHelper.getLocalDateTimeFromFirebaseTimestamp(runSegments.get(0).getStartDateTime());
         LocalDateTime endRun = FirestoreHelper.getLocalDateTimeFromFirebaseTimestamp(runSegments.get(runSegments.size() - 1).getEndDateTime());
         long totalMinutes = ChronoUnit.MINUTES.between(startRun, endRun);
         long totalSeconds = ChronoUnit.SECONDS.between(startRun, endRun) - totalMinutes * 60;
         String timeFormatted = String.format("%d:%02d", totalMinutes, totalSeconds);
-
-        Log.e("chr", timeFormatted);
 
         DecimalFormat df = new DecimalFormat("#.##");
 
@@ -245,18 +230,20 @@ public class ActivityDetail extends AppCompatActivity {
         }
     }
 
-    private /*Cartesian */ void createColumnChart(List<RunSegment> runSegments) {
+    private void initChartView() {
+        anyChartView = findViewById(R.id.barChart);
+        anyChartView.setBackgroundColor("#00000000");
+    }
+
+    private void createColumnChart(List<RunSegment> runSegments) {
         Map<Integer, Number> graph_map = new TreeMap<>();
 
         for (RunSegment segment : runSegments) {
-            if(indexList == 0){
-                Log.e("called with", "zero" + String.valueOf(segment.getSteps()));
+            if (indexList == 0) {
                 graph_map.put(runSegments.indexOf(segment) + 1, segment.getSteps());
-            } else if (indexList == 1){
-                Log.e("called with", "uno" + String.valueOf(segment.getKm()));
+            } else if (indexList == 1) {
                 graph_map.put(runSegments.indexOf(segment) + 1, segment.getKm());
             } else {
-                Log.e("called with", "due" + String.valueOf(segment.getCalories()));
                 graph_map.put(runSegments.indexOf(segment) + 1, segment.getCalories());
             }
         }
@@ -293,14 +280,9 @@ public class ActivityDetail extends AppCompatActivity {
         cartesian.background().fill("#00000000");
         cartesian.animation(true);
 
-       // return cartesian;
     }
 
-    private void initChartView() {
-        anyChartView = findViewById(R.id.barChart);
-        anyChartView.setBackgroundColor("#00000000");
-    }
-
+    //require chart to use new data
     private void updateChart(List<RunSegment> runSegments) {
         if (runSegments.size() > 1) {
             //anyChartView.clear();
@@ -309,13 +291,10 @@ public class ActivityDetail extends AppCompatActivity {
 
             for (RunSegment segment : runSegments) {
                 if (indexList == 0) {
-                    Log.e("called with", "zero" + String.valueOf(segment.getSteps()));
                     graph_map.put(runSegments.indexOf(segment) + 1, segment.getSteps());
                 } else if (indexList == 1) {
-                    Log.e("called with", "uno" + String.valueOf(segment.getKm()));
                     graph_map.put(runSegments.indexOf(segment) + 1, segment.getKm());
                 } else {
-                    Log.e("called with", "due" + String.valueOf(segment.getCalories()));
                     graph_map.put(runSegments.indexOf(segment) + 1, segment.getCalories());
                 }
             }
@@ -332,18 +311,6 @@ public class ActivityDetail extends AppCompatActivity {
             anyChartView.setVisibility(View.GONE);
             buttonContainer.setVisibility(View.GONE);
         }
-    }
-
-    private void createInfoItem(String titleText, String propertyText, LinearLayout layout) {
-        LinearLayout infoLayout = (LinearLayout) LayoutInflater.from(this).inflate(R.layout.info_run_detail, layout, false);
-        // Customize the card content based on item data
-        TextView title = infoLayout.findViewById(R.id.itemTitle);
-        TextView property = infoLayout.findViewById(R.id.itemProperty);
-        //cardText.setText(item.getRunId());
-        title.setText(titleText);
-        property.setText(propertyText);
-
-        layout.addView(infoLayout);
     }
 
     private void createPdf(String steps, String calories, String averagePace,

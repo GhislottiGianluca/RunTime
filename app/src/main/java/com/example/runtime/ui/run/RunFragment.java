@@ -37,7 +37,6 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.example.runtime.LoginActivity;
 import com.example.runtime.R;
-import com.example.runtime.UserMetricsActivity;
 import com.example.runtime.databinding.FragmentRunBinding;
 import com.example.runtime.firestore.FirestoreHelper;
 import com.example.runtime.sharedPrefs.SharedPreferencesHelper;
@@ -135,10 +134,10 @@ public class RunFragment extends Fragment {
 
     private LocationManager mLocationManager;
 
+    //implementing locationlistener to track changes in location
     private final LocationListener mLocationListener = new LocationListener() {
         @Override
         public void onLocationChanged(final Location location) {
-            Log.w("gps updates", "Calling gps update");
             final GeoPoint geoPoint = new GeoPoint(location.getLatitude(), location.getLongitude());
             geoPoints.add(geoPoint);
             Toast.makeText(requireContext(), "Collected geoPoint: lat " + geoPoint.getLatitude() + " lon " + geoPoint.getLongitude(), Toast.LENGTH_SHORT).show();
@@ -226,6 +225,8 @@ public class RunFragment extends Fragment {
         return root;
     }
 
+    //after checking if the required permissions are granted, init the locationManager and start
+    //to collect data every 5 seconds. If Permissions not granted -> require them
     private void startLocationUpdates() {
         mLocationManager = (LocationManager) getActivity().getSystemService(LOCATION_SERVICE);
 
@@ -233,7 +234,6 @@ public class RunFragment extends Fragment {
                 && ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
 
             Toast.makeText(requireContext(), "start to try collecting geopoint", Toast.LENGTH_SHORT).show();
-
             mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, LOCATION_REFRESH_TIME,
                     /*LOCATION_REFRESH_DISTANCE*/ 0, mLocationListener);
         } else { //check if the case
@@ -241,24 +241,11 @@ public class RunFragment extends Fragment {
         }
     }
 
+
+    //stop to listen the location changes
     private void stopLocationUpdates() {
-        /*LocationManager mLocationManager = (LocationManager) getActivity().getSystemService(LOCATION_SERVICE);
-        if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-                && ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-
-            Toast.makeText(requireContext(), "stop collecting geopoint", Toast.LENGTH_SHORT).show();
-            mLocationManager.removeUpdates(mLocationListener);
-        }
-
-         */
-
         Toast.makeText(requireContext(), "stop collecting geopoint", Toast.LENGTH_SHORT).show();
         mLocationManager.removeUpdates(mLocationListener);
-
-        /*if(mLocationManager != null) {
-            Toast.makeText(requireContext(), "stop collecting geopoint", Toast.LENGTH_SHORT).show();
-            mLocationManager.removeUpdates(mLocationListener);
-        }*/
     }
 
     //Callback interface
@@ -268,7 +255,6 @@ public class RunFragment extends Fragment {
 
 
     private void setButtonListener(String userUuid) {
-
         playButton(userUuid);
         pauseButton(userUuid);
         stopButton(userUuid);
@@ -287,10 +273,9 @@ public class RunFragment extends Fragment {
             chronometer.setBase(SystemClock.elapsedRealtime());
             chronometer.start();
 
-            //TODO: CREATE RUN
+            //create run
             startRunDateTime = LocalDateTime.now();
             createRun(userUuid, startRunDateTime);
-            //Toast.makeText(requireContext(), "initialized run session", Toast.LENGTH_SHORT).show();
 
             //Sensor handling
             startResumeRun();
@@ -383,15 +368,9 @@ public class RunFragment extends Fragment {
             //2 possibility:
             // user stop run while it is in pause (no need to create last segment),
             // user stops run while it is running (it needs to create last segment)
-            //TODO: CLOSE LAST RUN_SEGMENT
             if (pauseManagement) {
-                /*if (hasLocationPermissions()) {
-                   Toast.makeText(requireContext(), "stop collecting geopoint", Toast.LENGTH_SHORT).show();
-                stopLocationUpdates();
-                }*/
                 LocalDateTime endRunSegmentDateTime = LocalDateTime.now();
                 createRunSegment(runId, startRunDateTime, endRunSegmentDateTime, geoPoints);
-                //Toast.makeText(requireContext(), "ended session, uploading last segment", Toast.LENGTH_SHORT).show();
             }
 
             pauseManagement = false;
@@ -399,7 +378,7 @@ public class RunFragment extends Fragment {
             Toast.makeText(requireContext(), "stop collecting geopoint", Toast.LENGTH_SHORT).show();
             stopLocationUpdates();
 
-            //add to firebase run the summaries of the activity
+            //add to firebase runs the summaries of the activity
             updateRun(runId);
 
             //reset the data
@@ -427,22 +406,18 @@ public class RunFragment extends Fragment {
                 timeWhenStopped = chronometer.getBase() - SystemClock.elapsedRealtime();
                 chronometer.stop();
 
-                //TODO: CLOSE RUN FRAGMENT
-                /*if (hasLocationPermissions()) {
-                    stopLocationUpdates();
-                }*/
                 stopLocationUpdates();
 
+                //create run segment
                 LocalDateTime endRunSegmentDateTime = LocalDateTime.now();
                 createRunSegment(runId, startRunDateTime, endRunSegmentDateTime, geoPoints);
-                //Toast.makeText(requireContext(), "close runSegment successfully, pause the app", Toast.LENGTH_SHORT).show();
 
                 // Reset the fragment data
                 pauseRun();
 
                 stopPauseRun();
 
-            } else { //put in pause, close run segment
+            } else {
                 pause.setImageResource(R.drawable.pause);
                 pauseManagement = true;
 
@@ -451,14 +426,9 @@ public class RunFragment extends Fragment {
                 timeWhenStopped = 0;
                 chronometer.start();
 
-                //TODO: CREATE RUN FRAGMENT -> the runSegment will be created on pause, on resume we will define only the new beginning time
-                /*if (hasLocationPermissions()) {
-                    startLocationUpdates();
-                }*/
                 startLocationUpdates();
 
                 startRunDateTime = LocalDateTime.now();
-                //Toast.makeText(requireContext(), "updated new segment starTime, resuming the app", Toast.LENGTH_SHORT).show();
 
                 startResumeRun();
             }
@@ -625,6 +595,8 @@ public class RunFragment extends Fragment {
                 });
     }
 
+    //method called on "stop button" is clicked, it adds the overall data regarding the session
+    //to the model run
     public void updateRun(String runId) {
         if (runId == null) {
             Log.e("Firestore Update", "Invalid runId");
@@ -718,10 +690,6 @@ public class RunFragment extends Fragment {
                 });
     }
 
-
-
-
-    //Methods used to handle the permission
     private void updateTotValues() {
         totSteps += localList.size();
         totCalories += calories_local_value;
