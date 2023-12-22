@@ -313,8 +313,11 @@ public class ActivityDetail extends AppCompatActivity {
         }
     }
 
+    //Method called to create the pdf file immediately after the recap of the data of all
+    //the running fragment
     private void createPdf(String steps, String calories, String averagePace,
                            String totalKm, String totMin) {
+
         PdfDocument document = new PdfDocument();
 
         PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(300, 600, 1).create();
@@ -345,10 +348,11 @@ public class ActivityDetail extends AppCompatActivity {
             e.printStackTrace();
         }
 
-        //Close the document
+        //Document closed
         document.close();
     }
 
+    //Method used to share the pdf created via implicit intent
     private void sharePdf() {
         File file = new File(getExternalFilesDir(null), "mypdf.pdf");
 
@@ -356,8 +360,10 @@ public class ActivityDetail extends AppCompatActivity {
             Toast.makeText(this, "PDF not found.", Toast.LENGTH_SHORT).show();
             return;
         }
-
+        //Create the URI of the file
         Uri uri = FileProvider.getUriForFile(this, "com.example.runtime.provider", file);
+
+        //Creating the intent
         Intent intent = new Intent(Intent.ACTION_SEND);
         intent.setType("application/pdf");
         intent.putExtra(Intent.EXTRA_STREAM, uri);

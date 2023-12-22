@@ -76,6 +76,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+
     private void navigateToLogin() {
         SharedPreferencesHelper.clearSP(this);
         Intent intent = new Intent(MainActivity.this, LoginActivity.class);
@@ -90,6 +91,7 @@ public class MainActivity extends AppCompatActivity {
         finish();
     }
 
+    //user permission for write on the external storage, in this case the pdf created
     private void getWriteExternalStorage() {
         if (ActivityCompat.checkSelfPermission(MainActivity.this,
                 android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
@@ -104,6 +106,8 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+
+    //Methods used to handle user's activity permission
     private void getActivityPermission() {
         if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACTIVITY_RECOGNITION)
                 != PackageManager.PERMISSION_GRANTED)

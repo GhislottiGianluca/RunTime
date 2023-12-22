@@ -18,6 +18,7 @@ import java.util.UUID;
 
 public class RegisterActivity extends AppCompatActivity {
 
+    //Edit Text used to insert username and password during the registration process
     private EditText usernameEditText;
     private EditText passwordEditText;
     private EditText repeatPasswordEditText;
@@ -56,6 +57,7 @@ public class RegisterActivity extends AppCompatActivity {
         });
     }
 
+    //Methods used to check if the username inserted already exists
     private void ifUsernameAvailableCreateUser(String username, String password) {
         FirestoreHelper.getDb().collection("users")
                 .whereEqualTo("username", username)
@@ -73,10 +75,13 @@ public class RegisterActivity extends AppCompatActivity {
                 });
     }
 
+
+    //Method used to check if the password and the repetition match
     private boolean isPasswordMatching(String password, String repeatPassword) {
         return password.equals(repeatPassword);
     }
 
+    //Mehthod used to create an user inside the database
     private void createUser(String username, String password) {
         String uuid = UUID.randomUUID().toString();
         Map<String, Object> data = new HashMap<>();

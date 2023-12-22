@@ -1,5 +1,6 @@
 package com.example.runtime.ui.profile;
 
+import android.annotation.SuppressLint;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -38,19 +39,23 @@ public class ProfileFragment extends Fragment {
 
     private FragmentProfileBinding binding;
 
+    //Button variable to handle the user's intent
     private Button edit;
     private Button save;
     private Button cancel;
 
+    //Edit text used to manipulate the user's data
     private EditText usernameEditText;
     private EditText heightEditText;
     private EditText weightEditText;
 
+    //Strings referred to the old value of height and weight
     private String oldWeight;
     private String oldHeight;
 
     private static final String TAG = "ProfileFragment";
 
+    //Switch variable used to activate reminder notifications
     Switch reminderSwitch;
 
 
@@ -77,6 +82,7 @@ public class ProfileFragment extends Fragment {
         boolean isSwitchOn = sharedPref.getBoolean("EncouragementSwitchState", false);
         reminderSwitch.setChecked(isSwitchOn);
 
+        //Set onClick listener for the notification switch
         reminderSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             SharedPreferences.Editor editor = sharedPref.edit();
             editor.putBoolean("EncouragementSwitchState", isChecked);
@@ -89,6 +95,7 @@ public class ProfileFragment extends Fragment {
             }
         });
 
+        //Shared preferences to remember the selection of the user
         String uuid = SharedPreferencesHelper.getFieldStringFromSP(requireContext(), "uuid");
         if (!uuid.isEmpty()) {
             getUserInfo(uuid);

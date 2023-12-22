@@ -19,9 +19,12 @@ import com.google.firebase.firestore.QuerySnapshot;
 
 public class LoginActivity extends AppCompatActivity {
 
+    //Edit Text used for enter the username and password for the login
     private EditText usernameEditText;
     private EditText passwordEditText;
     private TextView registerText;
+
+    //Login button
     private Button loginButton;
 
     private static final String TAG = "LoginActivity";
